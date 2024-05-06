@@ -2,6 +2,10 @@
 module localcoin::registry {
     use std::string:: {String};
     use sui::dynamic_object_field as ofield;
+    use localcoin::allowlist_rule::{Self as allowlist};
+    use localcoin::spendlist_rule::{Self as spendlist};
+    use sui::token::{Self, TokenPolicy, TokenPolicyCap, Token};
+    use localcoin::local_coin::{Self as local_coin, LocalCoinApp, LOCAL_COIN};
 
     const ERegistrationRequested: u64 = 101;
     const ENoRegistrationRequest: u64 = 202;
@@ -79,7 +83,10 @@ module localcoin::registry {
     public fun verify_merchants (
         _: &SuperAdmin, 
         reg: &mut MerchantRegistry,
-        merchant_address: address
+        policy: &mut TokenPolicy<LOCAL_COIN>,
+        cap: &TokenPolicyCap<LOCAL_COIN>,
+        merchant_address: address,
+        ctx: &mut TxContext
     ) {
         // verify merchant address is in unverified list
         assert!(vector::contains(& reg.unverified_merchants, &merchant_address) == true, ENoRegistrationRequest);
@@ -93,6 +100,13 @@ module localcoin::registry {
         // add merchant address to verified merchant list
         vector::push_back(&mut reg.verified_merchants, merchant_address);
         reg.verified_merchants_count = reg.verified_merchants_count + 1;
+
+        let mut merchant_list = vector::empty();
+        vector::push_back(&mut merchant_list, merchant_address);
+
+        // add merchant address in both allowlist as well as spendlist
+        allowlist::add_records(policy, cap, merchant_list, ctx);
+        spendlist::add_records(policy, cap, merchant_list, ctx);
 
         // remove merchant address from unverified merchant list
         let (_ , index) = vector::index_of(& reg.unverified_merchants, &merchant_address);
