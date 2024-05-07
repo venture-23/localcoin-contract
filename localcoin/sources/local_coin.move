@@ -1,5 +1,4 @@
 module localcoin::local_coin {
-    use sui::vec_map;
     use sui::coin::{Self, TreasuryCap, Coin};
     use sui::tx_context::{sender};
     use sui::balance::{Self, Balance};
@@ -9,9 +8,6 @@ module localcoin::local_coin {
 
     use localcoin::allowlist_rule::{Self  as allowlist, Allowlist};
     use localcoin::spendlist_rule::{Self  as spendlist, Spendlist};
-    
-    /// Error code for incorrect amount.
-    const EIncorrectAmount: u64 = 0;
     
     /// OTW and the type for the Token.
     public struct LOCAL_COIN has drop {}
@@ -89,7 +85,6 @@ module localcoin::local_coin {
     }
 
     public fun transfer_token_to_merchants(
-        amount: u64,
         merchant: address,
         reg: Token<LOCAL_COIN>,
         policy : &TokenPolicy<LOCAL_COIN>,
@@ -118,10 +113,18 @@ module localcoin::local_coin {
     ) {
 
         let token = token::mint(&mut app.local_coin_treasury, amount, ctx);
-        let mut request = token::transfer(token, ctx.sender(), ctx);
+        let request = token::transfer(token, ctx.sender(), ctx);
 
         token::confirm_with_treasury_cap(&mut app.local_coin_treasury, request, ctx);
         coin::put(&mut app.balance, payment);
+    }
+
+    public(package) fun transfer_tokens_to_super_admin(
+        app: &mut LocalCoinApp,
+        amount: u64,
+        ctx: &mut TxContext
+    ) {
+        transfer::public_transfer(coin::take(&mut app.balance, amount, ctx), app.admin);
     }
 
 }
