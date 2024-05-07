@@ -4,8 +4,8 @@ module localcoin::registry {
     use sui::dynamic_object_field as ofield;
     use localcoin::allowlist_rule::{Self as allowlist};
     use localcoin::spendlist_rule::{Self as spendlist};
-    use sui::token::{Self, TokenPolicy, TokenPolicyCap, Token};
-    use localcoin::local_coin::{Self as local_coin, LocalCoinApp, LOCAL_COIN};
+    use sui::token::{TokenPolicy, TokenPolicyCap};
+    use localcoin::local_coin::LOCAL_COIN;
 
     const ERegistrationRequested: u64 = 101;
     const ENoRegistrationRequest: u64 = 202;
