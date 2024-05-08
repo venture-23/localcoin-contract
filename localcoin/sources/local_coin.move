@@ -8,6 +8,8 @@ module localcoin::local_coin {
 
     use localcoin::allowlist_rule::{Self  as allowlist, Allowlist};
     use localcoin::spendlist_rule::{Self  as spendlist, Spendlist};
+
+    const ESenderNotAdmin:u64 = 66;
     
     /// OTW and the type for the Token.
     public struct LOCAL_COIN has drop {}
@@ -18,40 +20,51 @@ module localcoin::local_coin {
         local_coin_treasury: TreasuryCap<LOCAL_COIN>,
         /// admin for the localCoinApp
         admin: address,
-        /// The SUI balance of the app;
-        balance: Balance<SUI>,
+    }
+
+    public struct UsdcTreasury<phantom T> has key {
+        id: UID,
+        balance: Balance<T>
     }
 
     fun init(otw: LOCAL_COIN, ctx: &mut TxContext) {
+        let sender = ctx.sender();
         let treasury_cap = create_currency(otw, ctx);
         let (mut policy, cap) = token::new_policy(&treasury_cap, ctx);
 
         set_rules(&mut policy, &cap, ctx);
-        let sender = ctx.sender();
         
         transfer::public_transfer(cap, sender);
-        token::share_policy(policy);
-
+        token::share_policy(policy); 
+        
         sui::transfer::share_object(LocalCoinApp {
             id: object::new(ctx),
             local_coin_treasury: treasury_cap,
-            admin: sender,
-            balance: balance::zero()
+            admin: sender
         });
-        
     }
 
     public(package) fun set_rules<T>(
         policy: &mut TokenPolicy<T>,
         cap: &TokenPolicyCap<T>,
-        ctx: &mut TxContext
-    ) {
+        ctx: &mut TxContext) {
         token::add_rule_for_action<T, Allowlist>(policy, cap, token::from_coin_action(), ctx);
         token::add_rule_for_action<T, Allowlist>(policy, cap, token::transfer_action(), ctx);
 
         token::add_rule_for_action<T, Spendlist>(policy, cap, token::spend_action(), ctx);
         token::add_rule_for_action<T, Spendlist>(policy, cap, token::from_coin_action(), ctx);
 
+    }
+
+    public fun register_token<T>(
+        app: &LocalCoinApp,
+        ctx: &mut TxContext) {
+        let sender = ctx.sender();
+        assert!(sender == app.admin, ESenderNotAdmin);
+        sui::transfer::share_object(UsdcTreasury<T> {
+            id: object::new(ctx),
+            balance: balance::zero<T>()
+        });
     }
 
     fun create_currency<T: drop>(
@@ -105,9 +118,10 @@ module localcoin::local_coin {
         token::confirm_request_mut(policy, req, ctx);
     }
 
-    public(package) fun mint_tokens(
+    public(package) fun mint_tokens<T>(
         app: &mut LocalCoinApp,
-        payment: Coin<SUI>,
+        usdc_treasury: &mut UsdcTreasury<T>,
+        payment: Coin<T>,
         amount: u64,
         ctx: &mut TxContext
     ) {
@@ -116,15 +130,16 @@ module localcoin::local_coin {
         let request = token::transfer(token, ctx.sender(), ctx);
 
         token::confirm_with_treasury_cap(&mut app.local_coin_treasury, request, ctx);
-        coin::put(&mut app.balance, payment);
+        coin::put<T>(&mut usdc_treasury.balance, payment);
     }
 
-    public(package) fun transfer_tokens_to_super_admin(
+    public(package) fun transfer_tokens_to_super_admin<T>(
+        usdc_treasury: &mut UsdcTreasury<T>,
         app: &mut LocalCoinApp,
         amount: u64,
         ctx: &mut TxContext
     ) {
-        transfer::public_transfer(coin::take(&mut app.balance, amount, ctx), app.admin);
+        transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), app.admin);
     }
 
 }

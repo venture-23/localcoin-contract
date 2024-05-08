@@ -4,15 +4,15 @@ module localcoin::campaign_management {
     use sui::token::{Self, TokenPolicy, Token};
     use sui::sui::SUI;
     use sui::vec_map::{Self, VecMap};
-    use localcoin::local_coin::{Self as local_coin, LocalCoinApp, LOCAL_COIN};
-
-    const MIN_CAMPAIGN_CREATOR_FEE:u64 = 1_000_000_000;
+    use localcoin::local_coin::{Self as local_coin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
+    const MIN_CAMPAIGN_CREATOR_FEE:u64 = 2_000_000;
 
     const EInsufficientCreatorFee: u64 = 11;
     const EInvalidAmount: u64 = 22;
     const EJoinRequested: u64 = 33;
     const ESenderNotCampaignOwner: u64 = 44;
     const ERecipientLimitReached: u64 = 55;
+    const ESenderNotAdmin: u64 = 66;
 
 
     public struct CampaignDetails has key, store {
@@ -26,13 +26,14 @@ module localcoin::campaign_management {
         creator: address
     }
 
-    public fun create_campaign(
+    public fun create_campaign<T>(
         name: String,
         description: String,
         no_of_recipients: u64,
         location: String,
-        payment: Coin<SUI>,
+        payment: Coin<T>,
         app: &mut LocalCoinApp,
+        usdc_treasury: &mut UsdcTreasury<T>,
         ctx: &mut TxContext
     ) {
         let amount = coin::value(&payment);
@@ -49,7 +50,7 @@ module localcoin::campaign_management {
             creator: ctx.sender()
         };
 
-        local_coin::mint_tokens(app, payment, amount, ctx);
+        local_coin::mint_tokens(app, usdc_treasury, payment, amount, ctx);
 
         transfer::transfer(campaign, ctx.sender());
     }
@@ -82,7 +83,8 @@ module localcoin::campaign_management {
         }
     }
 
-    public fun request_settlement(
+    public fun request_settlement<T>(
+        usdc_treasury: &mut UsdcTreasury<T>,
         app: &mut LocalCoinApp,
         token: Token<LOCAL_COIN>,
         policy : &mut TokenPolicy<LOCAL_COIN>,
@@ -94,7 +96,7 @@ module localcoin::campaign_management {
         local_coin::spend_token_from_merchant(token, policy, ctx);
 
         // transfer equivalent amount to super admin
-        local_coin::transfer_tokens_to_super_admin(app, amount, ctx);
+        local_coin::transfer_tokens_to_super_admin(usdc_treasury, app, amount, ctx);
     }
 
 
