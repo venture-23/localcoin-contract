@@ -4,7 +4,7 @@ import getExecStuff from '../utils/execstuff';
 dotenv.config();
 
 
-async function createCampaign() {
+async function merchantRegistration() {
     const { keypair, client } = getExecStuff();
 
     const packageId = process.env.PACKAGE_ID || '';
@@ -58,4 +58,4 @@ async function createCampaign() {
 }
 
 
-createCampaign();
+merchantRegistration();

@@ -16,11 +16,11 @@ async function recipientTransfer() {
     const pt = tx.moveCall({
         target: `${packageId}::local_coin::transfer_token_to_recipients`,
         arguments: [
-            tx.pure.u64(100000000),
+            tx.pure.u64(1000_000),
             // address of recipients
-            tx.pure.address("0x54191214990d5de162ff9e41d346e9034adb4d63d50230ac31970640b09b64b1"),
+            tx.pure.address("0x36306131687cf3eea75cf05e17d4919a3d0c605f462591e652834015f466fe1d"),
             // local coin token
-            tx.object('0x514b1abe54acd1ea8b296ebe1a1f1e35b18c8340166b28d74d8a8064855238eb'),
+            tx.object('0x0d359af63c8c9cbbd50334dd5665febe2b80597e7bafdca0ce7bd0cbb32ad7f4'),
             tx.object(tokenPolicy)
         ],
     });

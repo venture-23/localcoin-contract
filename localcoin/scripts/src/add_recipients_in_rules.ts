@@ -4,11 +4,10 @@ import getExecStuff from '../utils/execstuff';
 dotenv.config();
 
 
-async function createCampaign() {
+async function addRecipient() {
     const { keypair, client } = getExecStuff();
 
     const packageId = process.env.PACKAGE_ID || '';
-    const localCoinApp = process.env.LOCAL_COIN_APP || '';
     const tokenPolicy = process.env.TOKEN_POLICY || '';
     const tokenPolicyCap = process.env.TOKEN_POLICY_CAP || '';
 
@@ -36,4 +35,4 @@ async function createCampaign() {
 }
 
 
-createCampaign();
+addRecipient();

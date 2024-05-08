@@ -9,19 +9,23 @@ async function createCampaign() {
 
     const packageId = process.env.PACKAGE_ID || '';
     const LocalCoinApp = process.env.LOCAL_COIN_APP || '';
+    const usdcTreasury = process.env.USDC_TREASURY || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
         target: `${packageId}::campaign_management::create_campaign`,
         arguments: [
-            tx.pure.string("Campaign Name"),
+            tx.pure.string("Campaign Name222"),
             tx.pure.string('Campaign Descriptions'),
             tx.pure.u64(10),
             tx.pure.string("Campaign Location"),
             // payment object
-            tx.object("0x3480525f8aa0df25e130c9e0b8197b2c7206c2458ead863dd89ffc638dc2b308"),
-            tx.object(LocalCoinApp)
+            tx.object("0xb7dcbf5704061e4397a6ab3df3fb390f9abcd01a5a95047790565de50d04102e"),
+            tx.object(LocalCoinApp),
+            tx.object(usdcTreasury)
         ],
+        typeArguments: [`0x219d80b1be5d586ff3bdbfeaf4d051ec721442c3a6498a3222773c6945a73d9f::usdc::USDC`]
+
     });
 
     const result = await client.signAndExecuteTransactionBlock({

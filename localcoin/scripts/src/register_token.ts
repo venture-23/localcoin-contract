@@ -1,29 +1,25 @@
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import * as dotenv from 'dotenv';
 import getExecStuff from '../utils/execstuff';
+import fs from 'fs';
+import path from 'path';
 dotenv.config();
 
 
-async function verifyMerchants() {
+async function registerToken() {
     const { keypair, client } = getExecStuff();
 
     const packageId = process.env.PACKAGE_ID || '';
-    const merchantRegistry = process.env.MERCHANT_REGISTRY || '';
-    const superAdmin = process.env.SUPER_ADMIN || '';
-    const tokenPolicy = process.env.TOKEN_POLICY || '';
-    const tokenPolicyCap = process.env.TOKEN_POLICY_CAP || '';
+    const LocalCoinApp = process.env.LOCAL_COIN_APP || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
-        target: `${packageId}::registry::verify_merchants`,
+        target: `${packageId}::local_coin::register_token`,
         arguments: [
-            tx.object(superAdmin),
-            tx.object(merchantRegistry),
-            tx.object(tokenPolicy),
-            tx.object(tokenPolicyCap),
-            // address of merchants
-            tx.pure.address("0xe63826bf27e7e596e0842065559d3efbdcdb425cb2e20ea445cda0a4239ce3b6")
+            tx.object(LocalCoinApp)
         ],
+        typeArguments: [`0x219d80b1be5d586ff3bdbfeaf4d051ec721442c3a6498a3222773c6945a73d9f::usdc::USDC`]
+
     });
 
     const result = await client.signAndExecuteTransactionBlock({
@@ -47,18 +43,26 @@ async function verifyMerchants() {
     });
     let output: any;
     output = txn.objectChanges;
-    let campaign_details;
-
+    let usdc_treasury;
     for (let i = 0; i < output.length; i++) {
         const item = output[i];
+        console.log(item.type);
         if (await item.type === 'created') {
-            if (await item.objectType === `${packageId}::campaign_management::CampaignDetails`) {
-                campaign_details = String(item.objectId);
+            console.log(item.objectType);
+            if (await item.objectType === `${packageId}::local_coin::UsdcTreasury<0x219d80b1be5d586ff3bdbfeaf4d051ec721442c3a6498a3222773c6945a73d9f::usdc::USDC>`) {
+                usdc_treasury = String(item.objectId);
             }
         }
     }
-    console.log(`campaign details : ${campaign_details}`);
+    // write file in env
+    const envFilePath = path.resolve(__dirname, '../../.env');
+    let envData = fs.readFileSync(envFilePath, 'utf8');
+
+    envData = envData.replace(/^USDC_TREASURY\s*=\s*.*/m, `USDC_TREASURY='${usdc_treasury}'`);
+
+    fs.writeFileSync(envFilePath, envData);
+    console.log(`USDC Treasury : ${usdc_treasury}`);
 }
 
 
-verifyMerchants();
+registerToken();

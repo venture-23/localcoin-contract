@@ -4,11 +4,10 @@ import getExecStuff from '../utils/execstuff';
 dotenv.config();
 
 
-async function recipientTransfer() {
+async function merchantTransfer() {
     const { keypair, client } = getExecStuff();
 
     const packageId = process.env.PACKAGE_ID || '';
-    const localCoinApp = process.env.LOCAL_COIN_APP || '';
     const tokenPolicy = process.env.TOKEN_POLICY || '';
 
 
@@ -16,10 +15,9 @@ async function recipientTransfer() {
     const pt = tx.moveCall({
         target: `${packageId}::local_coin::transfer_token_to_merchants`,
         arguments: [
-            tx.pure.u64(100000000),
             tx.pure.address("0xe63826bf27e7e596e0842065559d3efbdcdb425cb2e20ea445cda0a4239ce3b6"),
             // local coin token
-            tx.object('0x95db5f1938d87354d9f3e843807719862be6ec2a257fe9e0bce64c89a84857aa'),
+            tx.object('0xe0c25f77848d0fb73b10ee933cea9a0e7072666d9e11ca75a29ecce171f8140e'),
             tx.object(tokenPolicy)
         ],
     });
@@ -34,4 +32,4 @@ async function recipientTransfer() {
 }
 
 
-recipientTransfer();
+merchantTransfer();
