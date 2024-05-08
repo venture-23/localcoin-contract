@@ -5,7 +5,7 @@ module localcoin::campaign_management {
     use sui::sui::SUI;
     use sui::vec_map::{Self, VecMap};
     use localcoin::local_coin::{Self as local_coin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
-    const MIN_CAMPAIGN_CREATOR_FEE:u64 = 2_000_000;
+    const MIN_CAMPAIGN_CREATOR_FEE:u64 = 1_000_000;
 
     const EInsufficientCreatorFee: u64 = 11;
     const EInvalidAmount: u64 = 22;
@@ -91,7 +91,7 @@ module localcoin::campaign_management {
         ctx: &mut TxContext
     ) {
         let amount = token::value(&token);
-        assert!(amount <= 0, EInvalidAmount);
+        assert!(amount >= 0, EInvalidAmount);
 
         local_coin::spend_token_from_merchant(token, policy, ctx);
 
