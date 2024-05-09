@@ -2,9 +2,10 @@ module localcoin::campaign_management {
     use std::string:: {String};
     use sui::coin::{Self, Coin};
     use sui::token::{Self, TokenPolicy, Token};
-    use sui::sui::SUI;
     use sui::vec_map::{Self, VecMap};
     use localcoin::local_coin::{Self as local_coin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
+    use sui::dynamic_object_field as ofield;
+
     const MIN_CAMPAIGN_CREATOR_FEE:u64 = 1_000_000;
 
     const EInsufficientCreatorFee: u64 = 11;
@@ -12,8 +13,10 @@ module localcoin::campaign_management {
     const EJoinRequested: u64 = 33;
     const ESenderNotCampaignOwner: u64 = 44;
     const ERecipientLimitReached: u64 = 55;
-    const ESenderNotAdmin: u64 = 66;
 
+    public struct Campaigns has key {   
+        id: UID
+    }
 
     public struct CampaignDetails has key, store {
         id: UID,
@@ -26,7 +29,14 @@ module localcoin::campaign_management {
         creator: address
     }
 
-    public fun create_campaign<T>(
+    fun init(ctx: &mut TxContext) {
+        let campaigns = Campaigns {
+            id: object::new(ctx)
+        };
+        transfer::share_object(campaigns);
+    }
+
+    public fun create_campaign<T> (
         name: String,
         description: String,
         no_of_recipients: u64,
@@ -34,6 +44,7 @@ module localcoin::campaign_management {
         payment: Coin<T>,
         app: &mut LocalCoinApp,
         usdc_treasury: &mut UsdcTreasury<T>,
+        campaigns: &mut Campaigns,
         ctx: &mut TxContext
     ) {
         let amount = coin::value(&payment);
@@ -51,28 +62,33 @@ module localcoin::campaign_management {
         };
 
         local_coin::mint_tokens(app, usdc_treasury, payment, amount, ctx);
-
-        transfer::transfer(campaign, ctx.sender());
+        // add campaigns details to dof
+        ofield::add(&mut campaigns.id, name, campaign);
     }
 
     public fun join_campaign (
-        campaign: &mut CampaignDetails,
+        campaigns: &mut Campaigns,
+        campaign_name: String,
         username: String,
         ctx: &mut TxContext
     ) {
         let sender = ctx.sender();
-        assert!(vec_map::contains(& campaign.unverified_recipients, &sender) == false ||
+        let campaign = ofield::borrow_mut<String, CampaignDetails>(&mut campaigns.id, campaign_name);
+        assert!(vec_map::contains(& campaign.unverified_recipients, &sender) == false &&
          vec_map::contains(& campaign.verified_recipients, &sender) == false, EJoinRequested);
 
         vec_map::insert(&mut campaign.unverified_recipients, sender, username);
     }
 
     public fun verify_recipients (
-        campaign: &mut CampaignDetails,
+        campaigns: &mut Campaigns,
+        campaign_name: String,
         mut recipients: vector<address>,
         ctx: &mut TxContext
     ) {
         let sender = ctx.sender();
+        let campaign = ofield::borrow_mut<String, CampaignDetails>(&mut campaigns.id, campaign_name);
+
         assert!(campaign.creator == sender, ESenderNotCampaignOwner);
         assert!((vec_map::size(&campaign.verified_recipients) + vector::length(&recipients)) <= campaign.no_of_recipients, ERecipientLimitReached);
 
@@ -99,5 +115,24 @@ module localcoin::campaign_management {
         local_coin::transfer_tokens_to_super_admin(usdc_treasury, app, amount, ctx);
     }
 
+    public fun get_campaign_details(campaigns: &Campaigns, campaign_name: String): &CampaignDetails {
+        ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name)
+    }
+
+    public fun get_unverified_recipients(campaigns: &Campaigns, campaign_name: String): VecMap<address, String> {
+        let campaign = ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name);
+        campaign.unverified_recipients
+    }
+
+    public fun get_verified_recipients(campaigns: &Campaigns, campaign_name: String): VecMap<address, String> {
+        let campaign = ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name);
+        campaign.verified_recipients
+    }
+
+    #[test_only]
+    /// Wrapper of module initializer for testing
+    public fun test_init(ctx: &mut TxContext) {
+        init(ctx)
+    }
 
 }
