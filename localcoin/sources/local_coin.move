@@ -2,7 +2,6 @@ module localcoin::local_coin {
     use sui::coin::{Self, TreasuryCap, Coin};
     use sui::tx_context::{sender};
     use sui::balance::{Self, Balance};
-    use sui::sui::SUI;
 
     use sui::token::{Self, TokenPolicy, TokenPolicyCap, Token};
 
@@ -135,11 +134,17 @@ module localcoin::local_coin {
 
     public(package) fun transfer_tokens_to_super_admin<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
-        app: &mut LocalCoinApp,
+        app: &LocalCoinApp,
         amount: u64,
         ctx: &mut TxContext
     ) {
         transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), app.admin);
+    }
+
+    #[test_only]
+    /// Wrapper of module initializer for testing
+    public fun test_init(ctx: &mut TxContext) {
+        init(LOCAL_COIN{}, ctx)
     }
 
 }
