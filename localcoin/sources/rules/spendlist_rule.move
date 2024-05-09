@@ -1,8 +1,5 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
-
 /// A simple spendlist rule - allows only the merchant on the merchantlist to
-/// perform an Action.
+/// spend LocalCoin Token.
 module localcoin::spendlist_rule {
     use sui::bag::{Self, Bag};
     use sui::token::{
@@ -18,13 +15,8 @@ module localcoin::spendlist_rule {
     /// The Rule witness.
     public struct Spendlist has drop {}
 
-    /// Verifies that the sender and the recipient (if set) are both on the
-    /// `spendlist_rule` for a given action.
-    ///
-    /// Aborts if:
-    /// - there's no config
-    /// - the sender is not on the allowlist
-    /// - the recipient is not on the allowlist
+    /// Verifies that the sender is on the
+    /// `spendlist_rule` for sppending of token.
     public fun verify<T>(
         policy: &TokenPolicy<T>,
         request: &mut ActionRequest<T>,
@@ -34,22 +26,15 @@ module localcoin::spendlist_rule {
 
         let config = config(policy);
         let sender = token::sender(request);
-        let recipient = token::recipient(request);
 
         assert!(bag::contains(config, sender), EUserNotAllowed);
-
-        if (option::is_some(&recipient)) {
-            let recipient = *option::borrow(&recipient);
-            assert!(bag::contains(config, recipient), EUserNotAllowed);
-        };
 
         token::add_approval(Spendlist {}, request, ctx);
     }
 
     // === Protected: List Management ===
 
-    /// Adds records to the `spendlist_rule` for a given action. The Policy
-    /// owner can batch-add records.
+    /// Adds records to the `spendlist_rule`.
     public fun add_records<T>(
         policy: &mut TokenPolicy<T>,
         cap: &TokenPolicyCap<T>,
@@ -66,8 +51,7 @@ module localcoin::spendlist_rule {
         }
     }
 
-    /// Removes records from the `spendlist_rule` for a given action. The Policy
-    /// owner can batch-remove records.
+    /// Removes records from the `spendlist_rule`.
     public fun remove_records<T>(
         policy: &mut TokenPolicy<T>,
         cap: &TokenPolicyCap<T>,

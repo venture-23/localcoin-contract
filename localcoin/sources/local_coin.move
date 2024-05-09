@@ -1,18 +1,25 @@
 module localcoin::local_coin {
+
+    // === Imports ===
+
     use sui::coin::{Self, TreasuryCap, Coin};
     use sui::tx_context::{sender};
     use sui::balance::{Self, Balance};
-
     use sui::token::{Self, TokenPolicy, TokenPolicyCap, Token};
 
     use localcoin::allowlist_rule::{Self  as allowlist, Allowlist};
     use localcoin::spendlist_rule::{Self  as spendlist, Spendlist};
 
+    // === Errors ===
+
     const ESenderNotAdmin:u64 = 66;
+
+    // === Structs ===
     
     /// OTW and the type for the Token.
     public struct LOCAL_COIN has drop {}
 
+    /// LocalCoinApp stores the treasury cap of the LocalCoin token and also holds the admin address.
     public struct LocalCoinApp has key {
         id: UID,
         /// The treasury cap for the `LocalCoinApp`.
@@ -21,12 +28,16 @@ module localcoin::local_coin {
         admin: address,
     }
 
+    /// This holds the total USDC sent through the app while creating a campaign.   
     public struct UsdcTreasury<phantom T> has key {
         id: UID,
         balance: Balance<T>
     }
 
-    fun init(otw: LOCAL_COIN, ctx: &mut TxContext) {
+    // === Init Function ===
+
+    fun init(otw: LOCAL_COIN, ctx: &mut TxContext
+    ) {
         let sender = ctx.sender();
         let treasury_cap = create_currency(otw, ctx);
         let (mut policy, cap) = token::new_policy(&treasury_cap, ctx);
@@ -43,27 +54,18 @@ module localcoin::local_coin {
         });
     }
 
-    public(package) fun set_rules<T>(
+    // === Private Functions ===
+
+    fun set_rules<T>(
         policy: &mut TokenPolicy<T>,
         cap: &TokenPolicyCap<T>,
-        ctx: &mut TxContext) {
+        ctx: &mut TxContext
+    ) {
         token::add_rule_for_action<T, Allowlist>(policy, cap, token::from_coin_action(), ctx);
         token::add_rule_for_action<T, Allowlist>(policy, cap, token::transfer_action(), ctx);
 
         token::add_rule_for_action<T, Spendlist>(policy, cap, token::spend_action(), ctx);
         token::add_rule_for_action<T, Spendlist>(policy, cap, token::from_coin_action(), ctx);
-
-    }
-
-    public fun register_token<T>(
-        app: &LocalCoinApp,
-        ctx: &mut TxContext) {
-        let sender = ctx.sender();
-        assert!(sender == app.admin, ESenderNotAdmin);
-        sui::transfer::share_object(UsdcTreasury<T> {
-            id: object::new(ctx),
-            balance: balance::zero<T>()
-        });
     }
 
     fun create_currency<T: drop>(
@@ -83,6 +85,25 @@ module localcoin::local_coin {
         treasury_cap
     }
 
+    // === Admin Functions ===
+    
+    /// Initializing USDC treasury by creating a object. This function should only be called by the
+    /// deployer of the package.
+    public fun register_token<T>(
+        app: &LocalCoinApp,
+        ctx: &mut TxContext
+    ) {
+        let sender = ctx.sender();
+        assert!(sender == app.admin, ESenderNotAdmin);
+        sui::transfer::share_object(UsdcTreasury<T> {
+            id: object::new(ctx),
+            balance: balance::zero<T>()
+        });
+    }
+
+    // === Public-Mutative Functions ===
+
+    /// Campaign Creator uses this function to transfer the tokens to recipients.
     public fun transfer_token_to_recipients(
         amount: u64,
         recipient: address,
@@ -96,6 +117,7 @@ module localcoin::local_coin {
         token::confirm_request(policy, req, ctx);
     }
 
+    /// Recipient uses this function to transfer the tokens to merchants.
     public fun transfer_token_to_merchants(
         merchant: address,
         reg: Token<LOCAL_COIN>,
@@ -107,6 +129,9 @@ module localcoin::local_coin {
         token::confirm_request(policy, req, ctx);
     }
 
+    // === Public-Package Functions ===
+
+    /// Merchant uses this function to spend the LocalCoin tokens.
     public(package) fun spend_token_from_merchant(
         reg: Token<LOCAL_COIN>,
         policy : &mut TokenPolicy<LOCAL_COIN>,
@@ -117,6 +142,7 @@ module localcoin::local_coin {
         token::confirm_request_mut(policy, req, ctx);
     }
 
+    /// This function will be used to mint the LocalCoin token .
     public(package) fun mint_tokens<T>(
         app: &mut LocalCoinApp,
         usdc_treasury: &mut UsdcTreasury<T>,
@@ -124,7 +150,6 @@ module localcoin::local_coin {
         amount: u64,
         ctx: &mut TxContext
     ) {
-
         let token = token::mint(&mut app.local_coin_treasury, amount, ctx);
         let request = token::transfer(token, ctx.sender(), ctx);
 
@@ -132,7 +157,8 @@ module localcoin::local_coin {
         coin::put<T>(&mut usdc_treasury.balance, payment);
     }
 
-    public(package) fun transfer_tokens_to_super_admin<T>(
+    /// Once the localCoin token is spend , this function will be used to transfer usdc to super admin.
+    public(package) fun transfer_usdc_to_super_admin<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
         app: &LocalCoinApp,
         amount: u64,

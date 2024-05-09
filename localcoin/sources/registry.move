@@ -1,20 +1,31 @@
 /// Module: localcoin
 module localcoin::registry {
+
+    // === Imports ===
+
     use std::string:: {String};
+
     use sui::dynamic_object_field as ofield;
+    use sui::token::{TokenPolicy, TokenPolicyCap};
+
     use localcoin::allowlist_rule::{Self as allowlist};
     use localcoin::spendlist_rule::{Self as spendlist};
-    use sui::token::{TokenPolicy, TokenPolicyCap};
     use localcoin::local_coin::LOCAL_COIN;
+
+    // === Errors ===
 
     const ERegistrationRequested: u64 = 101;
     const ENoRegistrationRequest: u64 = 202;
     const EMerchantsAlreadyVerified: u64 = 303;
 
+    // === Structs ===
+
+    /// SuperAdminCap is the capability object that SuperAdmin holds.
     public struct SuperAdminCap has key {
         id: UID
     }
 
+    /// MerchantRegistry stores all the merchant details associated with LocalCoin.
     public struct MerchantRegistry has key {
         id: UID,
         unverified_merchants_count: u64,
@@ -23,6 +34,7 @@ module localcoin::registry {
         verified_merchants: vector<address>
     }
 
+    /// MerchantDetails stores the details of an individual merchant.
     public struct MerchantDetails has key, store {
         id: UID,
         verified_status: bool,
@@ -32,6 +44,8 @@ module localcoin::registry {
         store_name: String,
         location: String
     }
+
+    // === Init Function ===
 
     fun init(ctx: &mut TxContext) {
         let super_admin = SuperAdminCap {
@@ -49,6 +63,9 @@ module localcoin::registry {
         transfer::share_object(merchant_reg);
     }
 
+    // === Public-Mutative Functions ===
+
+    /// Any of the merchant can come and register to be associated with our product using this function.
     public fun merchant_registration (
         proprietor: String, 
         phone_no: String, 
@@ -80,6 +97,10 @@ module localcoin::registry {
         ofield::add(&mut reg.id, sender, merchant_details);
     }
 
+    // === Admin Functions ===
+
+    /// SuperAdmin verifies the merchant using this function.
+    /// Once the merchant is verified they will be associated with our product.
     public fun verify_merchant (
         _: &SuperAdminCap, 
         reg: &mut MerchantRegistry,
@@ -114,6 +135,8 @@ module localcoin::registry {
         reg.unverified_merchants_count = reg.unverified_merchants_count - 1;
     }
 
+    /// SuperAdmin can use this function to update the merchant info
+    ///  if any merchant submits the false details while registering to be the merchant.
     public fun update_merchant_info (
         _: &SuperAdminCap, 
         reg: &mut MerchantRegistry,
@@ -147,6 +170,8 @@ module localcoin::registry {
             reg.unverified_merchants_count = reg.unverified_merchants_count + 1;
         };
     }
+    
+    // === Public-View Functions ===
 
     public fun get_merchant_info(reg: &mut MerchantRegistry, merchant_address:address): &MerchantDetails {
         ofield::borrow<address, MerchantDetails>(&reg.id, merchant_address)

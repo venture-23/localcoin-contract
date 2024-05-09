@@ -1,12 +1,21 @@
 module localcoin::campaign_management {
+
+    // === Imports ===
+
     use std::string:: {String};
+
     use sui::coin::{Self, Coin};
     use sui::token::{Self, TokenPolicy, Token};
     use sui::vec_map::{Self, VecMap};
-    use localcoin::local_coin::{Self as local_coin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
     use sui::dynamic_object_field as ofield;
 
+    use localcoin::local_coin::{Self as local_coin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
+
+    // === Constants ===
+
     const MIN_CAMPAIGN_CREATOR_FEE:u64 = 1_000_000;
+
+    // === Errors ===
 
     const EInsufficientCreatorFee: u64 = 11;
     const EInvalidAmount: u64 = 22;
@@ -14,10 +23,13 @@ module localcoin::campaign_management {
     const ESenderNotCampaignOwner: u64 = 44;
     const ERecipientLimitReached: u64 = 55;
 
+    // === Structs ===
+
     public struct Campaigns has key {   
         id: UID
     }
 
+    /// CampaignDetails Struct stores details of each campaign.
     public struct CampaignDetails has key, store {
         id: UID,
         name: String,
@@ -29,13 +41,20 @@ module localcoin::campaign_management {
         creator: address
     }
 
-    fun init(ctx: &mut TxContext) {
+    // === Init Function ===
+
+    fun init(ctx: &mut TxContext
+    ) {
         let campaigns = Campaigns {
             id: object::new(ctx)
         };
         transfer::share_object(campaigns);
     }
 
+    // === Public-Mutative Functions ===
+
+    /// Campaign Creator will create campaign by sending USDC tokens.
+    /// After the tokens are deposited, localCoin will be minted to the campaign creator.
     public fun create_campaign<T> (
         name: String,
         description: String,
@@ -66,6 +85,7 @@ module localcoin::campaign_management {
         ofield::add(&mut campaigns.id, name, campaign);
     }
 
+    /// Recipients can join the campaign by providing the campaign object that they wanted to join.
     public fun join_campaign (
         campaigns: &mut Campaigns,
         campaign_name: String,
@@ -80,6 +100,9 @@ module localcoin::campaign_management {
         vec_map::insert(&mut campaign.unverified_recipients, sender, username);
     }
 
+    // === Protected Functions ===
+
+    /// Campaign Creator can verify the recipients list and let them enter in their campaign.
     public fun verify_recipients (
         campaigns: &mut Campaigns,
         campaign_name: String,
@@ -99,6 +122,10 @@ module localcoin::campaign_management {
         }
     }
 
+    /// Merchant will request for the settlement once he get LocalCoin tokens from recipients.
+    /// The LocalCoin token will be spent and the respective USDC amount will be transferred to
+    /// SuperAdmin.
+    /// Once SuperAdmin gets the USDC , they will be settling up with the merchants in fiat currency.
     public fun request_settlement<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
         app: &mut LocalCoinApp,
@@ -112,8 +139,10 @@ module localcoin::campaign_management {
         local_coin::spend_token_from_merchant(token, policy, ctx);
 
         // transfer equivalent amount to super admin
-        local_coin::transfer_tokens_to_super_admin(usdc_treasury, app, amount, ctx);
+        local_coin::transfer_usdc_to_super_admin(usdc_treasury, app, amount, ctx);
     }
+
+    // === Public-View Functions ===
 
     public fun get_campaign_details(campaigns: &Campaigns, campaign_name: String): &CampaignDetails {
         ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name)
@@ -127,7 +156,7 @@ module localcoin::campaign_management {
     public fun get_verified_recipients(campaigns: &Campaigns, campaign_name: String): VecMap<address, String> {
         let campaign = ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name);
         campaign.verified_recipients
-    }
+    }  
 
     #[test_only]
     /// Wrapper of module initializer for testing
