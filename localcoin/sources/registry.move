@@ -11,7 +11,7 @@ module localcoin::registry {
     const ENoRegistrationRequest: u64 = 202;
     const EMerchantsAlreadyVerified: u64 = 303;
 
-    public struct SuperAdmin has key {
+    public struct SuperAdminCap has key {
         id: UID
     }
 
@@ -34,7 +34,7 @@ module localcoin::registry {
     }
 
     fun init(ctx: &mut TxContext) {
-        let super_admin = SuperAdmin {
+        let super_admin = SuperAdminCap {
             id: object::new(ctx)
         };
         transfer::transfer(super_admin, ctx.sender());
@@ -59,7 +59,7 @@ module localcoin::registry {
     ) {
         let sender = ctx.sender();
         // verify sender is not in unverified merchant list
-        assert!(vector::contains(& reg.unverified_merchants, &sender) == false ||
+        assert!(vector::contains(& reg.unverified_merchants, &sender) == false &&
          vector::contains(& reg.verified_merchants, &sender) == false, ERegistrationRequested);
 
         let merchant_details = MerchantDetails {
@@ -80,8 +80,8 @@ module localcoin::registry {
         ofield::add(&mut reg.id, sender, merchant_details);
     }
 
-    public fun verify_merchants (
-        _: &SuperAdmin, 
+    public fun verify_merchant (
+        _: &SuperAdminCap, 
         reg: &mut MerchantRegistry,
         policy: &mut TokenPolicy<LOCAL_COIN>,
         cap: &TokenPolicyCap<LOCAL_COIN>,
@@ -115,7 +115,7 @@ module localcoin::registry {
     }
 
     public fun update_merchant_info (
-        _: &SuperAdmin, 
+        _: &SuperAdminCap, 
         reg: &mut MerchantRegistry,
         verified_status: bool,
         merchant_addr: address,
@@ -146,6 +146,24 @@ module localcoin::registry {
             vector::push_back(&mut reg.unverified_merchants, merchant_addr);
             reg.unverified_merchants_count = reg.unverified_merchants_count + 1;
         };
+    }
+
+    public fun get_merchant_info(reg: &mut MerchantRegistry, merchant_address:address): &MerchantDetails {
+        ofield::borrow<address, MerchantDetails>(&reg.id, merchant_address)
+    }
+
+    public fun get_unverified_merchants(reg: &MerchantRegistry): vector<address> {
+        reg.unverified_merchants
+    }
+
+    public fun get_verified_merchants(reg: &MerchantRegistry): vector<address> {
+        reg.verified_merchants
+    }
+
+    #[test_only]
+    /// Wrapper of module initializer for testing
+    public fun test_init(ctx: &mut TxContext) {
+        init(ctx)
     }
 }
 
