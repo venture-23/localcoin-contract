@@ -11,7 +11,7 @@ async function verifyMerchants() {
     const merchantRegistry = process.env.MERCHANT_REGISTRY || '';
     const superAdmin = process.env.SUPER_ADMIN || '';
     const tokenPolicy = process.env.TOKEN_POLICY || '';
-    const tokenPolicyCap = process.env.TOKEN_POLICY_CAP || '';
+    const localCoinApp = process.env.LOCAL_COIN_APP || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
@@ -20,7 +20,7 @@ async function verifyMerchants() {
             tx.object(superAdmin),
             tx.object(merchantRegistry),
             tx.object(tokenPolicy),
-            tx.object(tokenPolicyCap),
+            tx.object(localCoinApp),
             // address of merchants
             tx.pure.address("0x54191214990d5de162ff9e41d346e9034adb4d63d50230ac31970640b09b64b1")
         ],

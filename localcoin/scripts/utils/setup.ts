@@ -49,7 +49,6 @@ const getPackageId = async () => {
         let localCoinApp;
         let superAdmin;
         let tokenPolicy;
-        let tokenPolicyCap;
         let merchantRegistry;
         let campaign;
 
@@ -84,16 +83,12 @@ const getPackageId = async () => {
                     localCoinApp = String(item.objectId);
                 }
 
-                if (await item.objectType == `${packageId}::registry::SuperAdmin`) {
+                if (await item.objectType == `${packageId}::registry::SuperAdminCap`) {
                     superAdmin = String(item.objectId);
                 }
 
                 if (await item.objectType == `0x2::token::TokenPolicy<${packageId}::local_coin::LOCAL_COIN>`) {
                     tokenPolicy = String(item.objectId);
-                }
-
-                if (await item.objectType == `0x2::token::TokenPolicyCap<${packageId}::local_coin::LOCAL_COIN>`) {
-                    tokenPolicyCap = String(item.objectId);
                 }
 
                 if (await item.objectType == `${packageId}::registry::MerchantRegistry`) {
@@ -114,7 +109,6 @@ const getPackageId = async () => {
         envData = envData.replace(/^UPGRADE_CAP\s*=\s*.*/m, `UPGRADE_CAP='${upgradeCap}'`);
         envData = envData.replace(/^LOCAL_COIN_APP\s*=\s*.*/m, `LOCAL_COIN_APP='${localCoinApp}'`);
         envData = envData.replace(/^SUPER_ADMIN\s*=\s*.*/m, `SUPER_ADMIN='${superAdmin}'`);
-        envData = envData.replace(/^TOKEN_POLICY_CAP\s*=\s*.*/m, `TOKEN_POLICY_CAP='${tokenPolicyCap}'`);
         envData = envData.replace(/^TOKEN_POLICY\s*=\s*.*/m, `TOKEN_POLICY='${tokenPolicy}'`);
         envData = envData.replace(/^MERCHANT_REGISTRY\s*=\s*.*/m, `MERCHANT_REGISTRY='${merchantRegistry}'`);
         envData = envData.replace(/^CAMPAIGN\s*=\s*.*/m, `CAMPAIGN='${campaign}'`);
@@ -122,7 +116,7 @@ const getPackageId = async () => {
 
         fs.writeFileSync(envFilePath, envData);
 
-        return { packageId, upgradeCap, localCoinApp, superAdmin, tokenPolicyCap, tokenPolicy  };
+        return { packageId, upgradeCap, localCoinApp, superAdmin, tokenPolicy  };
     } catch (error) {
         // Handle potential errors if the promise rejects
         console.error(error);

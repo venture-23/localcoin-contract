@@ -20,7 +20,7 @@ async function recipientTransfer() {
             // address of recipients
             tx.pure.address("0x36306131687cf3eea75cf05e17d4919a3d0c605f462591e652834015f466fe1d"),
             // local coin token
-            tx.object('0x0d359af63c8c9cbbd50334dd5665febe2b80597e7bafdca0ce7bd0cbb32ad7f4'),
+            tx.object('0x35a09df94a8b84caeedb9de8c40ea23cba4f02dfc3790129ff1b6eca949af37d'),
             tx.object(tokenPolicy)
         ],
     });

@@ -15,9 +15,9 @@ async function merchantTransfer() {
     const pt = tx.moveCall({
         target: `${packageId}::local_coin::transfer_token_to_merchants`,
         arguments: [
-            tx.pure.address("0xe63826bf27e7e596e0842065559d3efbdcdb425cb2e20ea445cda0a4239ce3b6"),
+            tx.pure.address("0x54191214990d5de162ff9e41d346e9034adb4d63d50230ac31970640b09b64b1"),
             // local coin token
-            tx.object('0xe0c25f77848d0fb73b10ee933cea9a0e7072666d9e11ca75a29ecce171f8140e'),
+            tx.object('0xd8fadcf42e0a0bbb09425a5b9f36f3849ed852a3ed629e3a9b766a2d13f37ab4'),
             tx.object(tokenPolicy)
         ],
     });

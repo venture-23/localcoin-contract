@@ -19,7 +19,7 @@ async function requestSettlement() {
             tx.object(usdcTreasury),
             tx.object(localCoinApp),
             // token to burn
-            tx.object('0xe0c25f77848d0fb73b10ee933cea9a0e7072666d9e11ca75a29ecce171f8140e'),
+            tx.object('0xd8fadcf42e0a0bbb09425a5b9f36f3849ed852a3ed629e3a9b766a2d13f37ab4'),
             tx.object(tokenPolicy)
         ],
         typeArguments: [`0x219d80b1be5d586ff3bdbfeaf4d051ec721442c3a6498a3222773c6945a73d9f::usdc::USDC`]

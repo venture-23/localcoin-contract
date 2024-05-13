@@ -11,6 +11,7 @@ async function createCampaign() {
     const LocalCoinApp = process.env.LOCAL_COIN_APP || '';
     const usdcTreasury = process.env.USDC_TREASURY || '';
     const campaign = process.env.CAMPAIGN || '';
+    const tokenPolicy = process.env.TOKEN_POLICY || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
@@ -21,10 +22,11 @@ async function createCampaign() {
             tx.pure.u64(10),
             tx.pure.string("Campaign Location"),
             // payment object
-            tx.object("0x0cb72ddaa8cf62aafecb939d3a07b4ff46962488d6330753ed61f4e36f9bec70"),
+            tx.object("0xe33840312ae0a4b9045bf3cf9e44cc66bbc8585f9ed59acccc5653a480328d17"),
             tx.object(LocalCoinApp),
             tx.object(usdcTreasury),
-            tx.object(campaign)
+            tx.object(campaign),
+            tx.object(tokenPolicy)
         ],
         typeArguments: [`0x219d80b1be5d586ff3bdbfeaf4d051ec721442c3a6498a3222773c6945a73d9f::usdc::USDC`]
 
