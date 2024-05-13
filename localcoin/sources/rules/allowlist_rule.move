@@ -62,7 +62,11 @@ module localcoin::allowlist_rule {
 
         let config_mut = config_mut(policy, cap);
         while (vector::length(&addresses) > 0) {
-            bag::add(config_mut, vector::pop_back(&mut addresses), true)
+            let address = vector::pop_back(&mut addresses);
+            let exist_already = bag::contains(config_mut, address);
+            if (!exist_already){
+                bag::add(config_mut, address, true);
+            };
         }
     }
 
