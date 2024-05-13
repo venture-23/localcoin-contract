@@ -1,8 +1,8 @@
 #[test_only]
 module localcoin::registry_tests {
     use localcoin::registry::{Self, SuperAdminCap, MerchantRegistry};
-    use localcoin::local_coin::{Self, LOCAL_COIN};
-    use sui::token::{TokenPolicy, TokenPolicyCap};
+    use localcoin::local_coin::{Self, LOCAL_COIN, LocalCoinApp};
+    use sui::token::{TokenPolicy};
     use std::string::{Self};
     use sui::test_scenario;
 
@@ -56,12 +56,12 @@ module localcoin::registry_tests {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let policycap = test_scenario::take_from_sender<TokenPolicyCap<LOCAL_COIN>>(&scenario);
+            let mut localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
 
-            registry::verify_merchant(&superAdmin, &mut merchantRegistry, &mut tokenpolicy, &policycap, merchant, test_scenario::ctx(&mut scenario));
+            registry::verify_merchant(&superAdmin, &mut merchantRegistry, &mut tokenpolicy, &mut localCoinApp, merchant, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_to_address(admin, superAdmin);
-            test_scenario::return_to_address(admin, policycap);
+            test_scenario::return_shared(localCoinApp);
 
             test_scenario::return_shared(merchantRegistry);
             test_scenario::return_shared(tokenpolicy);
@@ -192,12 +192,13 @@ module localcoin::registry_tests {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let policycap = test_scenario::take_from_sender<TokenPolicyCap<LOCAL_COIN>>(&scenario);
+            let mut localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
 
-            registry::verify_merchant(&superAdmin, &mut merchantRegistry, &mut tokenpolicy, &policycap, merchant, test_scenario::ctx(&mut scenario));
+
+            registry::verify_merchant(&superAdmin, &mut merchantRegistry, &mut tokenpolicy, &mut localCoinApp, merchant, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_to_address(admin, superAdmin);
-            test_scenario::return_to_address(admin, policycap);
+            test_scenario::return_shared(localCoinApp);
 
             test_scenario::return_shared(merchantRegistry);
             test_scenario::return_shared(tokenpolicy);
