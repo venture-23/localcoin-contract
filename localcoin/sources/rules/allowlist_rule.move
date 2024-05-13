@@ -50,7 +50,7 @@ module localcoin::allowlist_rule {
 
     /// Adds records to the `allowlist_rule` for a given action. The Policy
     /// owner can batch-add records.
-    public fun add_records<T>(
+    public(package) fun add_records<T>(
         policy: &mut TokenPolicy<T>,
         cap: &TokenPolicyCap<T>,
         mut addresses: vector<address>,

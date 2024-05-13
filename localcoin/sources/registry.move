@@ -6,11 +6,9 @@ module localcoin::registry {
     use std::string:: {String};
 
     use sui::dynamic_object_field as ofield;
-    use sui::token::{TokenPolicy, TokenPolicyCap};
+    use sui::token::{TokenPolicy};
 
-    use localcoin::allowlist_rule::{Self as allowlist};
-    use localcoin::spendlist_rule::{Self as spendlist};
-    use localcoin::local_coin::LOCAL_COIN;
+    use localcoin::local_coin::{Self as localcoin, LOCAL_COIN, LocalCoinApp};
 
     // === Errors ===
 
@@ -105,7 +103,7 @@ module localcoin::registry {
         _: &SuperAdminCap, 
         reg: &mut MerchantRegistry,
         policy: &mut TokenPolicy<LOCAL_COIN>,
-        cap: &TokenPolicyCap<LOCAL_COIN>,
+        app: &mut LocalCoinApp,
         merchant_address: address,
         ctx: &mut TxContext
     ) {
@@ -126,8 +124,7 @@ module localcoin::registry {
         vector::push_back(&mut merchant_list, merchant_address);
 
         // add merchant address in both allowlist as well as spendlist
-        allowlist::add_records(policy, cap, merchant_list, ctx);
-        spendlist::add_records(policy, cap, merchant_list, ctx);
+        localcoin::add_merchant_to_allow_and_spend_list(policy, merchant_list, app, ctx);
 
         // remove merchant address from unverified merchant list
         let (_ , index) = vector::index_of(& reg.unverified_merchants, &merchant_address);

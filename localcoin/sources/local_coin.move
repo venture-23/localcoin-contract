@@ -24,6 +24,8 @@ module localcoin::local_coin {
         id: UID,
         /// The treasury cap for the `LocalCoinApp`.
         local_coin_treasury: TreasuryCap<LOCAL_COIN>,
+        /// token policy cap 
+        token_policy_cap: TokenPolicyCap<LOCAL_COIN>,
         /// admin for the localCoinApp
         admin: address,
     }
@@ -44,12 +46,13 @@ module localcoin::local_coin {
 
         set_rules(&mut policy, &cap, ctx);
         
-        transfer::public_transfer(cap, sender);
+        // transfer::public_transfer(cap, sender);
         token::share_policy(policy); 
         
         sui::transfer::share_object(LocalCoinApp {
             id: object::new(ctx),
             local_coin_treasury: treasury_cap,
+            token_policy_cap: cap,
             admin: sender
         });
     }
@@ -148,6 +151,7 @@ module localcoin::local_coin {
         usdc_treasury: &mut UsdcTreasury<T>,
         payment: Coin<T>,
         amount: u64,
+        policy: &mut TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
     ) {
         let token = token::mint(&mut app.local_coin_treasury, amount, ctx);
@@ -155,6 +159,9 @@ module localcoin::local_coin {
 
         token::confirm_with_treasury_cap(&mut app.local_coin_treasury, request, ctx);
         coin::put<T>(&mut usdc_treasury.balance, payment);
+        let mut campaign_creator = vector::empty();
+        vector::push_back(&mut campaign_creator, ctx.sender());
+        allowlist::add_records(policy, &app.token_policy_cap, campaign_creator, ctx);
     }
 
     /// Once the localCoin token is spend , this function will be used to transfer usdc to super admin.
@@ -165,6 +172,42 @@ module localcoin::local_coin {
         ctx: &mut TxContext
     ) {
         transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), app.admin);
+    }
+
+    /// transfer and spend roles is given to the merchant.
+    public(package) fun add_merchant_to_allow_and_spend_list(
+        policy: &mut TokenPolicy<LOCAL_COIN>,
+        addresses: vector<address>,
+        app: &LocalCoinApp,
+        ctx: &mut TxContext
+    ) {
+        // let token_policy_cap = app.token_policy_cap;
+        let LocalCoinApp{
+            id: _,
+            local_coin_treasury: _,
+            token_policy_cap: _,
+            admin: _
+        } = app;
+        allowlist::add_records(policy, &app.token_policy_cap, addresses, ctx);
+        spendlist::add_records(policy, &app.token_policy_cap, addresses, ctx);
+
+    }
+
+    /// transfer roles is given to the recipient.
+    public(package) fun add_recipient_to_allow_list(
+        policy: &mut TokenPolicy<LOCAL_COIN>,
+        addresses: vector<address>,
+        app: &LocalCoinApp,
+        ctx: &mut TxContext
+    ) {
+        // let token_policy_cap = app.token_policy_cap;
+        let LocalCoinApp{
+            id: _,
+            local_coin_treasury: _,
+            token_policy_cap: _,
+            admin: _
+        } = app;
+        allowlist::add_records(policy, &app.token_policy_cap, addresses, ctx);
     }
 
     #[test_only]

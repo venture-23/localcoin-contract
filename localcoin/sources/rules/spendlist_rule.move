@@ -35,7 +35,7 @@ module localcoin::spendlist_rule {
     // === Protected: List Management ===
 
     /// Adds records to the `spendlist_rule`.
-    public fun add_records<T>(
+    public(package) fun add_records<T>(
         policy: &mut TokenPolicy<T>,
         cap: &TokenPolicyCap<T>,
         mut addresses: vector<address>,

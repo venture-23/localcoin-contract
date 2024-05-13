@@ -9,7 +9,7 @@ module localcoin::campaign_management {
     use sui::vec_map::{Self, VecMap};
     use sui::dynamic_object_field as ofield;
 
-    use localcoin::local_coin::{Self as local_coin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
+    use localcoin::local_coin::{Self as localcoin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
 
     // === Constants ===
 
@@ -64,6 +64,7 @@ module localcoin::campaign_management {
         app: &mut LocalCoinApp,
         usdc_treasury: &mut UsdcTreasury<T>,
         campaigns: &mut Campaigns,
+        policy: &mut TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
     ) {
         let amount = coin::value(&payment);
@@ -80,7 +81,7 @@ module localcoin::campaign_management {
             creator: ctx.sender()
         };
 
-        local_coin::mint_tokens(app, usdc_treasury, payment, amount, ctx);
+        localcoin::mint_tokens(app, usdc_treasury, payment, amount, policy, ctx);
         // add campaigns details to dof
         ofield::add(&mut campaigns.id, name, campaign);
     }
@@ -107,6 +108,8 @@ module localcoin::campaign_management {
         campaigns: &mut Campaigns,
         campaign_name: String,
         mut recipients: vector<address>,
+        policy: &mut TokenPolicy<LOCAL_COIN>,
+        app: &mut LocalCoinApp,
         ctx: &mut TxContext
     ) {
         let sender = ctx.sender();
@@ -115,11 +118,15 @@ module localcoin::campaign_management {
         assert!(campaign.creator == sender, ESenderNotCampaignOwner);
         assert!((vec_map::size(&campaign.verified_recipients) + vector::length(&recipients)) <= campaign.no_of_recipients, ERecipientLimitReached);
 
+        // The recipient is added in the allow list.
+        localcoin::add_recipient_to_allow_list(policy, recipients, app, ctx);
+        
         while (vector::length(&recipients) > 0) {
             let recipient = vector::pop_back(&mut recipients);
             let (key, value) = vec_map::remove(&mut campaign.unverified_recipients, &recipient);
             vec_map::insert(&mut campaign.verified_recipients, key, value);
-        }
+        };
+
     }
 
     /// Merchant will request for the settlement once he get LocalCoin tokens from recipients.
@@ -136,10 +143,10 @@ module localcoin::campaign_management {
         let amount = token::value(&token);
         assert!(amount >= 0, EInvalidAmount);
 
-        local_coin::spend_token_from_merchant(token, policy, ctx);
+        localcoin::spend_token_from_merchant(token, policy, ctx);
 
         // transfer equivalent amount to super admin
-        local_coin::transfer_usdc_to_super_admin(usdc_treasury, app, amount, ctx);
+        localcoin::transfer_usdc_to_super_admin(usdc_treasury, app, amount, ctx);
     }
 
     // === Public-View Functions ===
