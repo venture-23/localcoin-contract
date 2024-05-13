@@ -51,6 +51,7 @@ const getPackageId = async () => {
         let tokenPolicy;
         let tokenPolicyCap;
         let merchantRegistry;
+        let campaign;
 
         await sleep(10000);
 
@@ -98,6 +99,9 @@ const getPackageId = async () => {
                 if (await item.objectType == `${packageId}::registry::MerchantRegistry`) {
                     merchantRegistry = String(item.objectId);
                 }
+                if (await item.objectType == `${packageId}::campaign_management::Campaigns`) {
+                    campaign = String(item.objectId);
+                }
                 
             }
         }
@@ -113,6 +117,7 @@ const getPackageId = async () => {
         envData = envData.replace(/^TOKEN_POLICY_CAP\s*=\s*.*/m, `TOKEN_POLICY_CAP='${tokenPolicyCap}'`);
         envData = envData.replace(/^TOKEN_POLICY\s*=\s*.*/m, `TOKEN_POLICY='${tokenPolicy}'`);
         envData = envData.replace(/^MERCHANT_REGISTRY\s*=\s*.*/m, `MERCHANT_REGISTRY='${merchantRegistry}'`);
+        envData = envData.replace(/^CAMPAIGN\s*=\s*.*/m, `CAMPAIGN='${campaign}'`);
 
 
         fs.writeFileSync(envFilePath, envData);

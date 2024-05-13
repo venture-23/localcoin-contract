@@ -15,14 +15,14 @@ async function verifyMerchants() {
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
-        target: `${packageId}::registry::verify_merchants`,
+        target: `${packageId}::registry::verify_merchant`,
         arguments: [
             tx.object(superAdmin),
             tx.object(merchantRegistry),
             tx.object(tokenPolicy),
             tx.object(tokenPolicyCap),
             // address of merchants
-            tx.pure.address("0xe63826bf27e7e596e0842065559d3efbdcdb425cb2e20ea445cda0a4239ce3b6")
+            tx.pure.address("0x54191214990d5de162ff9e41d346e9034adb4d63d50230ac31970640b09b64b1")
         ],
     });
 
@@ -47,17 +47,6 @@ async function verifyMerchants() {
     });
     let output: any;
     output = txn.objectChanges;
-    let campaign_details;
-
-    for (let i = 0; i < output.length; i++) {
-        const item = output[i];
-        if (await item.type === 'created') {
-            if (await item.objectType === `${packageId}::campaign_management::CampaignDetails`) {
-                campaign_details = String(item.objectId);
-            }
-        }
-    }
-    console.log(`campaign details : ${campaign_details}`);
 }
 
 
