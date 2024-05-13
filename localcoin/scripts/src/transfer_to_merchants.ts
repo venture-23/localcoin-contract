@@ -5,19 +5,21 @@ dotenv.config();
 
 
 async function merchantTransfer() {
-    const { keypair, client } = getExecStuff();
+    const { keypair, client } = getExecStuff("recipient");
 
     const packageId = process.env.PACKAGE_ID || '';
     const tokenPolicy = process.env.TOKEN_POLICY || '';
-
+    const merchantAddress = process.env.MERCHANT_ADDRESS || '';
+    // local coin token object owned by recipient
+    const localCoinToken = process.env.LC_TOKEN_RECIPIENT || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
         target: `${packageId}::local_coin::transfer_token_to_merchants`,
         arguments: [
-            tx.pure.address("0x54191214990d5de162ff9e41d346e9034adb4d63d50230ac31970640b09b64b1"),
+            tx.pure.address(merchantAddress),
             // local coin token
-            tx.object('0xd8fadcf42e0a0bbb09425a5b9f36f3849ed852a3ed629e3a9b766a2d13f37ab4'),
+            tx.object(localCoinToken),
             tx.object(tokenPolicy)
         ],
     });
@@ -27,8 +29,6 @@ async function merchantTransfer() {
         transactionBlock: tx,
     });
     console.log({ result });
-    console.log(pt);
-    const digest_ = result.digest;
 }
 
 

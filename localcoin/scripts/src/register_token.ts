@@ -4,21 +4,21 @@ import getExecStuff from '../utils/execstuff';
 import fs from 'fs';
 import path from 'path';
 dotenv.config();
-
+import sleep from '../utils/sleep'
 
 async function registerToken() {
-    const { keypair, client } = getExecStuff();
+    const { keypair, client } = getExecStuff("super_admin");
 
     const packageId = process.env.PACKAGE_ID || '';
     const LocalCoinApp = process.env.LOCAL_COIN_APP || '';
-
+    const usdcType = process.env.USDC_TYPE || '';
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
         target: `${packageId}::local_coin::register_token`,
         arguments: [
             tx.object(LocalCoinApp)
         ],
-        typeArguments: [`0x219d80b1be5d586ff3bdbfeaf4d051ec721442c3a6498a3222773c6945a73d9f::usdc::USDC`]
+        typeArguments: [usdcType]
 
     });
 
@@ -29,6 +29,7 @@ async function registerToken() {
     console.log({ result });
     console.log(pt);
     const digest_ = result.digest;
+    await sleep(30000);
 
     const txn = await client.getTransactionBlock({
         digest: String(digest_),
@@ -49,7 +50,7 @@ async function registerToken() {
         console.log(item.type);
         if (await item.type === 'created') {
             console.log(item.objectType);
-            if (await item.objectType === `${packageId}::local_coin::UsdcTreasury<0x219d80b1be5d586ff3bdbfeaf4d051ec721442c3a6498a3222773c6945a73d9f::usdc::USDC>`) {
+            if (await item.objectType === `${packageId}::local_coin::UsdcTreasury<${usdcType}>`) {
                 usdc_treasury = String(item.objectId);
             }
         }

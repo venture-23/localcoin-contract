@@ -5,13 +5,14 @@ dotenv.config();
 
 
 async function verifyMerchants() {
-    const { keypair, client } = getExecStuff();
+    const { keypair, client } = getExecStuff("super_admin");
 
     const packageId = process.env.PACKAGE_ID || '';
     const merchantRegistry = process.env.MERCHANT_REGISTRY || '';
     const superAdmin = process.env.SUPER_ADMIN || '';
     const tokenPolicy = process.env.TOKEN_POLICY || '';
     const localCoinApp = process.env.LOCAL_COIN_APP || '';
+    const merchantAddress = process.env.MERCHANT_ADDRESS || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
@@ -22,7 +23,7 @@ async function verifyMerchants() {
             tx.object(tokenPolicy),
             tx.object(localCoinApp),
             // address of merchants
-            tx.pure.address("0x54191214990d5de162ff9e41d346e9034adb4d63d50230ac31970640b09b64b1")
+            tx.pure.address(merchantAddress)
         ],
     });
 
@@ -31,22 +32,6 @@ async function verifyMerchants() {
         transactionBlock: tx,
     });
     console.log({ result });
-    console.log(pt);
-    const digest_ = result.digest;
-
-    const txn = await client.getTransactionBlock({
-        digest: String(digest_),
-        // only fetch the effects and objects field
-        options: {
-            showEffects: true,
-            showInput: false,
-            showEvents: false,
-            showObjectChanges: true,
-            showBalanceChanges: false,
-        },
-    });
-    let output: any;
-    output = txn.objectChanges;
 }
 
 

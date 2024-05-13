@@ -5,7 +5,7 @@ dotenv.config();
 
 // This function is used to join campaign by recipients
 async function joinCampaign() {
-    const { keypair, client } = getExecStuff();
+    const { keypair, client } = getExecStuff("recipient");
 
     const packageId = process.env.PACKAGE_ID || '';
     const campaign = process.env.CAMPAIGN || '';
@@ -16,7 +16,7 @@ async function joinCampaign() {
         arguments: [
             
             tx.object(campaign),
-            tx.pure.string("Campaign Name222"),
+            tx.pure.string("Campaign Name"),
             tx.pure.string("guysowe")
         ],
 
@@ -27,8 +27,6 @@ async function joinCampaign() {
         transactionBlock: tx,
     });
     console.log({ result });
-    console.log(pt);
-    const digest_ = result.digest;
 }
 
 

@@ -5,7 +5,7 @@ dotenv.config();
 
 
 async function merchantRegistration() {
-    const { keypair, client } = getExecStuff();
+    const { keypair, client } = getExecStuff("merchant");
 
     const packageId = process.env.PACKAGE_ID || '';
     const merchantRegistry = process.env.MERCHANT_REGISTRY || '';
@@ -28,33 +28,6 @@ async function merchantRegistration() {
         transactionBlock: tx,
     });
     console.log({ result });
-    console.log(pt);
-    const digest_ = result.digest;
-
-    const txn = await client.getTransactionBlock({
-        digest: String(digest_),
-        // only fetch the effects and objects field
-        options: {
-            showEffects: true,
-            showInput: false,
-            showEvents: false,
-            showObjectChanges: true,
-            showBalanceChanges: false,
-        },
-    });
-    let output: any;
-    output = txn.objectChanges;
-    let campaign_details;
-
-    for (let i = 0; i < output.length; i++) {
-        const item = output[i];
-        if (await item.type === 'created') {
-            if (await item.objectType === `${packageId}::campaign_management::CampaignDetails`) {
-                campaign_details = String(item.objectId);
-            }
-        }
-    }
-    console.log(`campaign details : ${campaign_details}`);
 }
 
 

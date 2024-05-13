@@ -6,12 +6,13 @@ dotenv.config();
 
 // This function is used to join campaign by recipients
 async function verifyRecipients() {
-    const { keypair, client } = getExecStuff();
+    const { keypair, client } = getExecStuff("super_admin");
 
     const packageId = process.env.PACKAGE_ID || '';
     const tokenPolicy = process.env.TOKEN_POLICY || '';
     const campaign = process.env.CAMPAIGN || '';
     const localCoinApp = process.env.LOCAL_COIN_APP || '';
+    const recipientAddress = process.env.RECIPIENT_ADDRESS || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
@@ -19,8 +20,8 @@ async function verifyRecipients() {
         arguments: [
             
             tx.object(campaign),
-            tx.pure.string("Campaign Name222"),
-            tx.pure(["0x36306131687cf3eea75cf05e17d4919a3d0c605f462591e652834015f466fe1d"]),
+            tx.pure.string("Campaign Name"),
+            tx.pure([recipientAddress]),
             tx.object(tokenPolicy),         
             tx.object(localCoinApp)
         ],
@@ -32,8 +33,6 @@ async function verifyRecipients() {
         transactionBlock: tx,
     });
     console.log({ result });
-    console.log(pt);
-    const digest_ = result.digest;
 }
 
 

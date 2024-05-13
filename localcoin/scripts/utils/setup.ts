@@ -1,21 +1,22 @@
 import { SuiObjectChangePublished } from '@mysten/sui.js/client';
 import { TransactionBlock } from '@mysten/sui.js/transactions';
 import getExecStuff from './execstuff';
+import sleep from './sleep';
 import fs from 'fs';
 import path from 'path';
 import { log } from 'console';
 
 const { execSync } = require('child_process');
 
-function sleep(ms: number): Promise<void> {
-    return new Promise(resolve => {
-        setTimeout(resolve, ms);
-    });
-}
+// function sleep(ms: number): Promise<void> {
+//     return new Promise(resolve => {
+//         setTimeout(resolve, ms);
+//     });
+// }
 
 const getPackageId = async () => {
     try {
-        const { keypair, client } = getExecStuff();
+        const { keypair, client } = getExecStuff("super_admin");
         const account = "0xe65f125538ff216c12106adfa9004813bba39b5fd58f45f453fb1a866e89c800";
         // const account = "0x7c5b5406c69465c4f09e0c1823fa689c2423697e2c73c120dbfa076d9c9b30ea";
         const packagePath = process.cwd();
@@ -52,7 +53,7 @@ const getPackageId = async () => {
         let merchantRegistry;
         let campaign;
 
-        await sleep(10000);
+        await sleep(20000);
 
         if (!digest_) {
             console.log("Digest is not available");
