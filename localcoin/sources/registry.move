@@ -14,7 +14,6 @@ module localcoin::registry {
 
     const ERegistrationRequested: u64 = 101;
     const ENoRegistrationRequest: u64 = 202;
-    const EMerchantsAlreadyVerified: u64 = 303;
 
     // === Structs ===
 
@@ -109,8 +108,6 @@ module localcoin::registry {
     ) {
         // verify merchant address is in unverified list
         assert!(vector::contains(& reg.unverified_merchants, &merchant_address) == true, ENoRegistrationRequest);
-        // verify merchant is already verified
-        assert!(vector::contains(& reg.verified_merchants, &merchant_address) == false, EMerchantsAlreadyVerified);
 
         let merchant_details = ofield::borrow_mut<address, MerchantDetails>(&mut reg.id, merchant_address);
         // update verified status to true
