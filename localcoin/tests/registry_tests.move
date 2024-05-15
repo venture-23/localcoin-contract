@@ -6,7 +6,6 @@ module localcoin::registry_tests {
     use std::string::{Self};
     use sui::test_scenario;
 
-
     #[test]
     fun test_merchant_registration() {
         // Arrange
@@ -26,7 +25,7 @@ module localcoin::registry_tests {
             local_coin::test_init(test_scenario::ctx(&mut scenario))
         };
 
-        // Act
+        // merchant requests for registration
         test_scenario::next_tx(&mut scenario, merchant);
         {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
@@ -36,7 +35,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
 
-        // Assert
+        // Assert the storage changes
         test_scenario::next_tx(&mut scenario, admin);
         {
             let merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
@@ -49,7 +48,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
         
-        // Act
+        // super admin verifies merchants
         test_scenario::next_tx(&mut scenario, admin);
         {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
@@ -67,7 +66,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(tokenpolicy);
         };
 
-        // Assert
+        // Assert the storage cahnges
         test_scenario::next_tx(&mut scenario, admin);
         {
             let merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
@@ -81,7 +80,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
 
-        // Act
+        // super admin updates the merchant info with status true
         test_scenario::next_tx(&mut scenario, admin);
         {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
@@ -93,7 +92,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
 
-        // Assert
+        // Assert storage changes
         test_scenario::next_tx(&mut scenario, admin);
         {
             let merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
@@ -104,7 +103,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
 
-        // Act
+        //  super admin updates the merchant info with status false
         test_scenario::next_tx(&mut scenario, admin);
         {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
@@ -116,7 +115,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
 
-        // Assert
+        // Assert storage changes
         test_scenario::next_tx(&mut scenario, admin);
         {
             let merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
@@ -130,7 +129,6 @@ module localcoin::registry_tests {
 
             test_scenario::return_shared(merchantRegistry);
         };
-                
         test_scenario::end(scenario);
     }
 
@@ -145,7 +143,7 @@ module localcoin::registry_tests {
             registry::test_init(test_scenario::ctx(&mut scenario));
         };
 
-        // Act
+        // merchant requests for registration
         test_scenario::next_tx(&mut scenario, merchant);
         {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
@@ -155,7 +153,7 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
 
-        // Act
+        // same merchant requests for registration , it fails
         test_scenario::next_tx(&mut scenario, merchant);
         {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
@@ -164,9 +162,7 @@ module localcoin::registry_tests {
 
             test_scenario::return_shared(merchantRegistry);
         };
-
         test_scenario::end(scenario);
-
     }
 
     #[test, expected_failure(abort_code = localcoin::registry::ENoRegistrationRequest)]
@@ -185,7 +181,7 @@ module localcoin::registry_tests {
             local_coin::test_init(test_scenario::ctx(&mut scenario))
         };
 
-        // Act
+        // super admin tries to verify merchant that has no registration request, it fails
         test_scenario::next_tx(&mut scenario, admin);
         {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
@@ -217,7 +213,7 @@ module localcoin::registry_tests {
             registry::test_init(test_scenario::ctx(&mut scenario));
         };
 
-        // Act
+        // super admin tries to update merchant info that has no registration request, it fails
         test_scenario::next_tx(&mut scenario, admin);
         {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
@@ -229,6 +225,70 @@ module localcoin::registry_tests {
             test_scenario::return_shared(merchantRegistry);
         };
 
+        test_scenario::end(scenario);
+    }
+
+    #[test, expected_failure(abort_code = localcoin::registry::ENoRegistrationRequest)]
+    fun test_merchant_already_verified_fail() {
+        // Arrange
+        let admin = @0xA;
+        let merchant = @0xB;
+
+        let mut scenario = test_scenario::begin(admin);
+        {       
+            registry::test_init(test_scenario::ctx(&mut scenario));
+        };
+
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            local_coin::test_init(test_scenario::ctx(&mut scenario))
+        };
+
+        // merchant requests for registration
+        test_scenario::next_tx(&mut scenario, merchant);
+        {
+            let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
+
+            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_shared(merchantRegistry);
+        };
+
+        // super admin verifies merchant
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
+            let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
+
+            let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let mut localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
+
+            registry::verify_merchant(&superAdmin, &mut merchantRegistry, &mut tokenpolicy, &mut localCoinApp, merchant, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_to_address(admin, superAdmin);
+            test_scenario::return_shared(localCoinApp);
+
+            test_scenario::return_shared(merchantRegistry);
+            test_scenario::return_shared(tokenpolicy);
+        };
+
+        // super admin tries to verify the merchant that is already verified, it fails
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
+            let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
+
+            let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let mut localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
+
+            registry::verify_merchant(&superAdmin, &mut merchantRegistry, &mut tokenpolicy, &mut localCoinApp, merchant, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_to_address(admin, superAdmin);
+            test_scenario::return_shared(localCoinApp);
+
+            test_scenario::return_shared(merchantRegistry);
+            test_scenario::return_shared(tokenpolicy);
+        };
         test_scenario::end(scenario);
     }
 
