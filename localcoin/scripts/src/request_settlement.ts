@@ -19,7 +19,6 @@ async function requestSettlement() {
         target: `${packageId}::campaign_management::request_settlement`,
         arguments: [
             tx.object(usdcTreasury),
-            tx.object(localCoinApp),
             // token to burn
             tx.object(localCoinToken),
             tx.object(tokenPolicy)
