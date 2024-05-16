@@ -167,13 +167,12 @@ module localcoin::local_coin {
     }
 
     /// Once the localCoin token is spend , this function will be used to transfer usdc to super admin.
-    public(package) fun transfer_usdc_to_super_admin<T>(
+    public(package) fun transfer_usdc_to_merchant<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
-        app: &LocalCoinApp,
         amount: u64,
         ctx: &mut TxContext
     ) {
-        transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), app.admin);
+        transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), ctx.sender());
     }
 
     /// transfer and spend roles is given to the merchant.

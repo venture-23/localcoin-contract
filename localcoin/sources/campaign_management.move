@@ -135,7 +135,6 @@ module localcoin::campaign_management {
     /// Once SuperAdmin gets the USDC , they will be settling up with the merchants in fiat currency.
     public fun request_settlement<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
-        app: &mut LocalCoinApp,
         token: Token<LOCAL_COIN>,
         policy : &mut TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
@@ -146,7 +145,7 @@ module localcoin::campaign_management {
         localcoin::spend_token_from_merchant(token, policy, ctx);
 
         // transfer equivalent amount to super admin
-        localcoin::transfer_usdc_to_super_admin(usdc_treasury, app, amount, ctx);
+        localcoin::transfer_usdc_to_merchant(usdc_treasury, amount, ctx);
     }
 
     // === Public-View Functions ===
