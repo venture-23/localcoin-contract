@@ -136,14 +136,12 @@ module localcoin::campaign_management_tests {
         // merchant request for settlement
         test_scenario::next_tx(&mut scenario, merchant);
         {
-            let mut localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
             let token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            campaign_management::request_settlement(&mut usdcTreasury, &mut localCoinApp, token, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+            campaign_management::request_settlement(&mut usdcTreasury, token, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
-            test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(tokenpolicy);
         };

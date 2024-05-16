@@ -115,7 +115,7 @@ module localcoin::localcoin_tests {
             let localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
 
-            local_coin::transfer_usdc_to_super_admin(&mut usdcTreasury, &localCoinApp, 10, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_usdc_to_merchant(&mut usdcTreasury, 10, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
