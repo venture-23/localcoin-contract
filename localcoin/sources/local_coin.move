@@ -106,7 +106,7 @@ module localcoin::local_coin {
     // === Public-Mutative Functions ===
 
     /// Campaign Creator uses this function to transfer the tokens to recipients.
-    public fun transfer_token_to_recipients(
+    public(package) fun transfer_to_recipients(
         amount: u64,
         recipient: address,
         reg: &mut Token<LOCAL_COIN>,

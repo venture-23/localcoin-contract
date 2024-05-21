@@ -37,6 +37,7 @@ module localcoin::campaign_management {
         no_of_recipients: u64,
         unverified_recipients: VecMap<address, String>,
         verified_recipients: VecMap<address, String>,
+        recipient_balance: VecMap<address, u64>,
         amount: u64,
         location: String,
         creator: address
@@ -78,6 +79,7 @@ module localcoin::campaign_management {
             no_of_recipients: no_of_recipients,
             unverified_recipients: vec_map::empty<address, String>(),
             verified_recipients: vec_map::empty<address, String>(),
+            recipient_balance: vec_map::empty<address, u64>(),
             amount: amount,
             location: location,
             creator: ctx.sender()
@@ -131,6 +133,32 @@ module localcoin::campaign_management {
 
     }
 
+    // Campaign creator transfers tokens to recipients. The recepient balance field gets updated
+    // everytime they receive tokens from creator.
+    public fun transfer_token_to_recipient (
+        campaigns: &mut Campaigns,
+        campaign_name: String,
+        amount: u64,
+        recipient: address,
+        reg: &mut Token<LOCAL_COIN>,
+        policy : &TokenPolicy<LOCAL_COIN>,
+        ctx: &mut TxContext
+    ) {
+        assert!(amount > 0, EInvalidAmount);
+
+        let campaign = ofield::borrow_mut<String, CampaignDetails>(&mut campaigns.id, campaign_name);
+        // let mut recipient_balance_map = campaign.recipient_balance;
+
+        if (vec_map::contains(&campaign.recipient_balance, &recipient)) {
+            let (key, val) = vec_map::remove(&mut campaign.recipient_balance, &recipient);
+            vec_map::insert(&mut campaign.recipient_balance, key, (val + amount));
+        } else {
+            vec_map::insert(&mut campaign.recipient_balance, recipient, amount);
+        };
+
+        localcoin::transfer_to_recipients(amount, recipient, reg, policy, ctx);
+    }
+
     /// Merchant will request for the settlement once he get LocalCoin tokens from recipients.
     /// The LocalCoin token will be spent and the respective USDC amount will be transferred to
     /// SuperAdmin.
@@ -142,7 +170,7 @@ module localcoin::campaign_management {
         ctx: &mut TxContext
     ) {
         let amount = token::value(&token);
-        assert!(amount >= 0, EInvalidAmount);
+        assert!(amount > 0, EInvalidAmount);
 
         localcoin::spend_token_from_merchant(token, policy, ctx);
 
@@ -164,7 +192,12 @@ module localcoin::campaign_management {
     public fun get_verified_recipients(campaigns: &Campaigns, campaign_name: String): VecMap<address, String> {
         let campaign = ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name);
         campaign.verified_recipients
-    }  
+    } 
+
+    public fun get_recipients_balance(campaigns: &Campaigns, campaign_name: String): VecMap<address, u64> {
+        let campaign = ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name);
+        campaign.recipient_balance
+    }
 
     #[test_only]
     /// Wrapper of module initializer for testing
