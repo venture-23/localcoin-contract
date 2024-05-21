@@ -81,7 +81,7 @@ module localcoin::localcoin_tests {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
             let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(tokenpolicy);
             test_utils::destroy(token);
@@ -164,7 +164,7 @@ module localcoin::localcoin_tests {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
             let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(tokenpolicy);
             test_utils::destroy(token);
@@ -298,7 +298,7 @@ module localcoin::localcoin_tests {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
             let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(tokenpolicy);
             test_utils::destroy(token);
@@ -465,7 +465,7 @@ module localcoin::localcoin_tests {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
             let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_to_recipients(10, recipient, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(tokenpolicy);
             test_utils::destroy(token);
