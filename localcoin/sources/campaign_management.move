@@ -37,6 +37,7 @@ module localcoin::campaign_management {
         no_of_recipients: u64,
         unverified_recipients: VecMap<address, String>,
         verified_recipients: VecMap<address, String>,
+        amount: u64,
         location: String,
         creator: address
     }
@@ -77,6 +78,7 @@ module localcoin::campaign_management {
             no_of_recipients: no_of_recipients,
             unverified_recipients: vec_map::empty<address, String>(),
             verified_recipients: vec_map::empty<address, String>(),
+            amount: amount,
             location: location,
             creator: ctx.sender()
         };
