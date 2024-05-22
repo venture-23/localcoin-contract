@@ -13,13 +13,16 @@ async function recipientTransfer() {
     const localCoinApp = process.env.LOCAL_COIN_APP || '';
     const tokenPolicy = process.env.TOKEN_POLICY || '';
     const recipientAddress = process.env.RECIPIENT_ADDRESS || '';
+    const campaign = process.env.CAMPAIGN || '';
     // local coin token object owned by campaign creator
     const localCoinToken = process.env.LC_TOKEN_CAMPAIGN_CREATOR || '';
 
     const tx = new TransactionBlock();
     const pt = tx.moveCall({
-        target: `${packageId}::local_coin::transfer_token_to_recipients`,
+        target: `${packageId}::campaign_management::transfer_token_to_recipient`,
         arguments: [
+            tx.object(campaign),
+            tx.pure.string("Campaign Name"),
             tx.pure.u64(1_000_000),
             // address of recipients
             tx.pure.address(recipientAddress),
