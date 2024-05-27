@@ -39,3 +39,32 @@ A closed loop token is standard in SUI where creators limit where the token is u
 Website: https://localcoin.us/
 
 App: https://app.localcoin.us/
+
+# Script Execution Guide
+This repository contains a set of scripts to manage various tasks related to campaigns, tokens, and merchants. The main script executes several TypeScript scripts in sequence to perform these tasks.
+
+### prequisite
+* ts-node installed globally or locally in the project
+
+### Running the scripts
+1. Clone the repository:
+
+2. Install the dependencies: ``npm install``
+
+3. Set the environment variables in .env file. You need to set `` RECIPIENT_MNEMONICS`` , `` SUPER_ADMIN_MNEMONICS`` and ``MERCHANT_MNEMONICS`` and their address respectively in the `` RECIPIENT_ADDRESS`` , `` SUPER_ADMIN_ADDRESS`` and `` MERCHANT_ADDRESS`` respectively.
+
+4. Run the main script using the command``  ./local_coin_script.sh ``.
+
+## Script Details
+script executes the following scripts in sequence:
+
+* setup.ts - Sets up initial configurations and deploys the contracts on testnet.
+* register_token.ts - Registers a new token. USDC token is registered in this step.
+* create_campaign.ts - Creates a new campaign by sending USDC and minting the local coin tokens.
+* join_campaign.ts - Recipient can join an existing campaign by sending the request to join.
+* verify_recipients.ts - Campaign Creator verifies recipients in the campaign.
+* transfer_to_recipient.ts - Transfers funds to a recipient by campaign creator.
+* merchant_registration.ts - User registers a new merchant.
+* verify_merchant.ts - SuperAdmin verifies a registered merchant.
+* transfer_to_merchants.ts - Transfers funds to merchants from the recipients.
+* request_settlement.ts - Requests settlement of funds by merchant. Merchant will burn the localCoin and get the equivalent amount of USDC tokens in this transaction.
