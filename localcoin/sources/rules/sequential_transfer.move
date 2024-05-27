@@ -46,11 +46,11 @@ module localcoin::sequential_transfer {
         let recipient = token::sender(request);
         let merchant = token::recipient(request);
 
-        assert!(bag::borrow(config, recipient) == b"recipient".to_string(), ESenderNotRecipient);
+        assert!(vector::contains(bag::borrow(config, b"recipient".to_string()), &recipient), ESenderNotRecipient);
 
         if (option::is_some(&merchant)) {
             let merchant = *option::borrow(&merchant);
-            assert!(bag::borrow(config, merchant) == b"merchant".to_string(), EReceiverNotMerchant);
+            assert!(vector::contains(bag::borrow(config, b"merchant".to_string()), &merchant), EReceiverNotMerchant);
         };
 
         token::add_approval(SequentialTransfer {}, request, ctx);
@@ -72,11 +72,12 @@ module localcoin::sequential_transfer {
         let campaign_creator = token::sender(request);
         let recipient = token::recipient(request);
 
-        assert!(bag::borrow(config, campaign_creator) == b"campaign_creator".to_string(), ESenderNotCampaignCreator);
+        assert!(vector::contains(bag::borrow(config, b"campaign_creator".to_string()), &campaign_creator), ESenderNotCampaignCreator);
 
         if (option::is_some(&recipient)) {
             let recipient = *option::borrow(&recipient);
-            assert!(bag::borrow(config, recipient) == b"recipient".to_string(), EReceiverNotRecipient);
+            assert!(vector::contains(bag::borrow(config, b"recipient".to_string()), &recipient), EReceiverNotRecipient);
+
         };
 
         token::add_approval(SequentialTransfer {}, request, ctx);
