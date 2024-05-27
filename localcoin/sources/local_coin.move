@@ -54,8 +54,8 @@ module localcoin::local_coin {
             id: object::new(ctx),
             local_coin_treasury: treasury_cap,
             token_policy_cap: cap,
-            admin: sender
-        });
+            admin: sender,
+        })
     }
 
     // === Private Functions ===
@@ -170,9 +170,10 @@ module localcoin::local_coin {
     public(package) fun transfer_usdc_to_merchant<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
         amount: u64,
+        recipient: address,
         ctx: &mut TxContext
     ) {
-        transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), ctx.sender());
+        transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), recipient);
     }
 
     /// transfer and spend roles is given to the merchant.

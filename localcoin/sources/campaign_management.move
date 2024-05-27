@@ -175,7 +175,7 @@ module localcoin::campaign_management {
         localcoin::spend_token_from_merchant(token, policy, ctx);
 
         // transfer equivalent amount to super admin
-        localcoin::transfer_usdc_to_merchant(usdc_treasury, amount, ctx);
+        localcoin::transfer_usdc_to_merchant(usdc_treasury, amount, ctx.sender(), ctx);
     }
 
     // === Public-View Functions ===
