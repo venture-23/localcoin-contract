@@ -43,7 +43,7 @@ App: https://app.localcoin.us/
 # Script Execution Guide
 This repository contains a set of scripts to manage various tasks related to campaigns, tokens, and merchants. The main script executes several TypeScript scripts in sequence to perform these tasks.
 
-### prequisite
+### Prequisite
 * ts-node installed globally or locally in the project
 
 ### Running the scripts
@@ -55,7 +55,7 @@ This repository contains a set of scripts to manage various tasks related to cam
 
 4. Run the main script using the command``  ./local_coin_script.sh ``.
 
-## Script Details
+### Script Details
 script executes the following scripts in sequence:
 
 * setup.ts - Sets up initial configurations and deploys the contracts on testnet.
