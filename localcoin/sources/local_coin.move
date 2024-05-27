@@ -118,12 +118,14 @@ module localcoin::local_coin {
 
     /// Recipient uses this function to transfer the tokens to merchants.
     public fun transfer_token_to_merchants(
+        amount: u64,
         merchant: address,
-        reg: Token<LOCAL_COIN>,
+        reg: &mut Token<LOCAL_COIN>,
         policy : &TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
     ) {
-        let mut req = token::transfer(reg, merchant, ctx);
+        let splitted_amount = token::split(reg, amount, ctx);
+        let mut req = token::transfer(splitted_amount, merchant, ctx);
         allow_list::verify_recipient_to_merchant_transfer(policy, &mut req, ctx);
         token::confirm_request(policy, req, ctx);
     }

@@ -22,8 +22,8 @@ async function recipientTransfer() {
         target: `${packageId}::campaign_management::transfer_token_to_recipient`,
         arguments: [
             tx.object(campaign),
-            tx.pure.string("Campaign Name"),
-            tx.pure.u64(1_000_000),
+            tx.pure.string("Campaign Name2"),
+            tx.pure.u64(6_000_000),
             // address of recipients
             tx.pure.address(recipientAddress),
             // local coin token
