@@ -96,12 +96,18 @@ module localcoin::sequential_transfer {
         };
 
         let config_mut = config_mut(policy, cap);
-        while (vector::length(&merchants) > 0) {
+        let mut _merchant_list = vector::empty();
+        
+        let exist_already = bag::contains(config_mut,  b"merchant".to_string());
+        if (exist_already){
+            _merchant_list = bag::remove(config_mut, b"merchant".to_string());
+            
             let merchant = vector::pop_back(&mut merchants);
-            let exist_already = bag::contains(config_mut, merchant);
-            if (!exist_already){
-                bag::add(config_mut, merchant, b"merchant".to_string());
-            };
+            vector::push_back(&mut _merchant_list, merchant);
+            bag::add(config_mut, b"merchant".to_string(), _merchant_list);
+        }
+        else {
+            bag::add(config_mut, b"merchant".to_string(), merchants);
         };
     }
 
@@ -117,13 +123,23 @@ module localcoin::sequential_transfer {
         };
 
         let config_mut = config_mut(policy, cap);
-        while (vector::length(&addresses) > 0) {
-            let address = vector::pop_back(&mut addresses);
-            let exist_already = bag::contains(config_mut, address);
-            if (!exist_already){
-                bag::add(config_mut, address, b"campaign_creator".to_string());
+        let mut _campaign_creators = vector::empty();
+        
+        let exist_already = bag::contains(config_mut,  b"campaign_creator".to_string());
+        if (exist_already){
+            _campaign_creators = bag::remove(config_mut, b"campaign_creator".to_string());
+                
+            let creator_address = vector::pop_back(&mut addresses);
+            let already_in_list = vector::contains(&_campaign_creators, &creator_address);
+            if (!already_in_list){
+                vector::push_back(&mut _campaign_creators, creator_address);
             };
+            bag::add(config_mut, b"campaign_creator".to_string(), _campaign_creators);
+        }
+        else {
+            bag::add(config_mut, b"campaign_creator".to_string(), addresses);
         };
+        
     }
 
     /// Adds recipient addresses to the bag.
@@ -138,13 +154,28 @@ module localcoin::sequential_transfer {
         };
 
         let config_mut = config_mut(policy, cap);
-        while (vector::length(&addresses) > 0) {
-            let address = vector::pop_back(&mut addresses);
-            let exist_already = bag::contains(config_mut, address);
-            if (!exist_already){
-                bag::add(config_mut, address, b"recipient".to_string());
+        let mut _recipient_list = vector::empty();
+        
+        let exist_already = bag::contains(config_mut,  b"recipient".to_string());
+        if (exist_already){
+            _recipient_list = bag::remove(config_mut, b"recipient".to_string());
+            while (vector::length(&addresses) > 0) {
+                
+            let recipient_address = vector::pop_back(&mut addresses);
+            let already_in_list = vector::contains(&_recipient_list, &recipient_address);
+            if (!already_in_list){
+                vector::push_back(&mut _recipient_list, recipient_address);
             };
+            bag::add(config_mut, b"recipient".to_string(), _recipient_list);
+            
+        }
+        }
+        else {
+            bag::add(config_mut, b"recipient".to_string(), addresses);
+           
         };
+        
+
     }
 
     /// Removes records from the `sequential_transfer rule` for a given action. The Policy
