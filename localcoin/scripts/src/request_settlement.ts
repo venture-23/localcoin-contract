@@ -11,7 +11,7 @@ async function requestSettlement() {
     const tokenPolicy = process.env.TOKEN_POLICY || '';
     const localCoinApp = process.env.LOCAL_COIN_APP || '';
     const usdcTreasury = process.env.USDC_TREASURY || '';
-    const localCoinToken = process.env.LC_TOKEN_RECIPIENT || '';
+    const localCoinToken = process.env.LC_TOKEN_MERCHANT || '';
     const usdcType = process.env.USDC_TYPE || '';
 
     const tx = new TransactionBlock();
