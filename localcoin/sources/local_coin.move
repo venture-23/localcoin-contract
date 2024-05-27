@@ -7,9 +7,7 @@ module localcoin::local_coin {
     use sui::balance::{Self, Balance};
     use sui::token::{Self, TokenPolicy, TokenPolicyCap, Token};
 
-    use localcoin::allowlist_rule::{Self  as allowlist, Allowlist};
-    use localcoin::spendlist_rule::{Self  as spendlist, Spendlist};
-    use localcoin::sequential_transfer::{Self  as sequential_transfer, SequentialTransfer};
+    use localcoin::allowlist::{Self  as allow_list, AllowList};
 
     // === Errors ===
 
@@ -65,9 +63,8 @@ module localcoin::local_coin {
         cap: &TokenPolicyCap<T>,
         ctx: &mut TxContext
     ) {
-        token::add_rule_for_action<T, Allowlist>(policy, cap, token::transfer_action(), ctx);
-        token::add_rule_for_action<T, SequentialTransfer>(policy, cap, token::transfer_action(), ctx);
-        token::add_rule_for_action<T, Spendlist>(policy, cap, token::spend_action(), ctx);
+        token::add_rule_for_action<T, AllowList>(policy, cap, token::transfer_action(), ctx);
+        token::add_rule_for_action<T, AllowList>(policy, cap, token::spend_action(), ctx);
     }
 
     fun create_currency<T: drop>(
@@ -115,8 +112,7 @@ module localcoin::local_coin {
     ) {
         let splitted_amount = token::split(reg, amount, ctx);
         let mut req = token::transfer(splitted_amount, recipient, ctx);
-        allowlist::verify(policy, &mut req, ctx);
-        sequential_transfer::verify_campaign_creator_to_recipient_transfer(policy, &mut req, ctx);
+        allow_list::verify_campaign_creator_to_recipient_transfer(policy, &mut req, ctx);
         token::confirm_request(policy, req, ctx);
     }
 
@@ -128,8 +124,7 @@ module localcoin::local_coin {
         ctx: &mut TxContext
     ) {
         let mut req = token::transfer(reg, merchant, ctx);
-        allowlist::verify(policy, &mut req, ctx);
-        sequential_transfer::verify_recipient_to_merchant_transfer(policy, &mut req, ctx);
+        allow_list::verify_recipient_to_merchant_transfer(policy, &mut req, ctx);
         token::confirm_request(policy, req, ctx);
     }
 
@@ -142,7 +137,7 @@ module localcoin::local_coin {
         ctx: &mut TxContext
     ) {
         let mut req = token::spend(reg, ctx);
-        spendlist::verify(policy, &mut req, ctx);
+        allow_list::verify_merchant_spending(policy, &mut req, ctx);
         token::confirm_request_mut(policy, req, ctx);
     }
 
@@ -162,8 +157,7 @@ module localcoin::local_coin {
         coin::put<T>(&mut usdc_treasury.balance, payment);
         let mut campaign_creator = vector::empty();
         vector::push_back(&mut campaign_creator, ctx.sender());
-        allowlist::add_records(policy, &app.token_policy_cap, campaign_creator, ctx);
-        sequential_transfer::add_campaign_creator(policy, &app.token_policy_cap, campaign_creator, ctx);
+        allow_list::add_campaign_creator(policy, &app.token_policy_cap, campaign_creator, ctx);
     }
 
     /// Once the localCoin token is spend , this function will be used to transfer usdc to super admin.
@@ -190,9 +184,7 @@ module localcoin::local_coin {
             token_policy_cap: _,
             admin: _
         } = app;
-        allowlist::add_records(policy, &app.token_policy_cap, addresses, ctx);
-        spendlist::add_records(policy, &app.token_policy_cap, addresses, ctx);
-        sequential_transfer::add_merchants(policy, &app.token_policy_cap, addresses, ctx);
+        allow_list::add_merchants(policy, &app.token_policy_cap, addresses, ctx);
     }
 
     /// transfer roles is given to the recipient.
@@ -209,8 +201,7 @@ module localcoin::local_coin {
             token_policy_cap: _,
             admin: _
         } = app;
-        allowlist::add_records(policy, &app.token_policy_cap, addresses, ctx);
-        sequential_transfer::add_recipients(policy, &app.token_policy_cap, addresses, ctx);
+        allow_list::add_recipients(policy, &app.token_policy_cap, addresses, ctx);
     }
 
     #[test_only]
