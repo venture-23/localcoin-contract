@@ -41,13 +41,14 @@ module localcoin::local_coin {
     ) {
         let sender = ctx.sender();
         let treasury_cap = create_currency(otw, ctx);
+
+        // Creating a new policy for the token.
         let (mut policy, cap) = token::new_policy(&treasury_cap, ctx);
 
+        // Adding rules in the token policy.
         set_rules(&mut policy, &cap, ctx);
         
-        // transfer::public_transfer(cap, sender);
         token::share_policy(policy); 
-        
         sui::transfer::share_object(LocalCoinApp {
             id: object::new(ctx),
             local_coin_treasury: treasury_cap,
@@ -75,7 +76,7 @@ module localcoin::local_coin {
             otw, 9,
             b"LC",
             b"Local Coin",
-            b"Coin that illustrates different regulatory requirements",
+            b"Coin that illustrates a closed cycle token system",
             option::none(),
             ctx
         );
@@ -102,48 +103,56 @@ module localcoin::local_coin {
 
     // === Public-Mutative Functions ===
 
-    /// Campaign Creator uses this function to transfer the tokens to recipients.
-    public(package) fun transfer_to_recipients(
-        amount: u64,
-        recipient: address,
-        reg: &mut Token<LOCAL_COIN>,
-        policy : &TokenPolicy<LOCAL_COIN>,
-        ctx: &mut TxContext
-    ) {
-        let splitted_amount = token::split(reg, amount, ctx);
-        let mut req = token::transfer(splitted_amount, recipient, ctx);
-        allow_list::verify_campaign_creator_to_recipient_transfer(policy, &mut req, ctx);
-        token::confirm_request(policy, req, ctx);
-    }
-
     /// Recipient uses this function to transfer the tokens to merchants.
     public fun transfer_token_to_merchants(
         amount: u64,
         merchant: address,
-        reg: &mut Token<LOCAL_COIN>,
+        local_coin_token: &mut Token<LOCAL_COIN>,
         policy : &TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
     ) {
-        let splitted_amount = token::split(reg, amount, ctx);
+        let splitted_amount = token::split(local_coin_token, amount, ctx);
         let mut req = token::transfer(splitted_amount, merchant, ctx);
+
+        // Verify that the transfer is done by the recipient and the receiver is merchant.
         allow_list::verify_recipient_to_merchant_transfer(policy, &mut req, ctx);
         token::confirm_request(policy, req, ctx);
     }
 
     // === Public-Package Functions ===
 
+    /// Campaign Creator uses this function to transfer the tokens to recipients.
+    public(package) fun transfer_to_recipients(
+        amount: u64,
+        recipient: address,
+        local_coin_token: &mut Token<LOCAL_COIN>,
+        policy : &TokenPolicy<LOCAL_COIN>,
+        ctx: &mut TxContext
+    ) {
+        let splitted_amount = token::split(local_coin_token, amount, ctx);
+        let mut req = token::transfer(splitted_amount, recipient, ctx);
+
+        // Verify that the transfer is done by the campaign creator and the receiver is recipient.
+        allow_list::verify_campaign_creator_to_recipient_transfer(policy, &mut req, ctx);
+        token::confirm_request(policy, req, ctx);
+    }
+
     /// Merchant uses this function to spend the LocalCoin tokens.
     public(package) fun spend_token_from_merchant(
-        reg: Token<LOCAL_COIN>,
+        local_coin_token: Token<LOCAL_COIN>,
         policy : &mut TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
     ) {
-        let mut req = token::spend(reg, ctx);
+        let mut req = token::spend(local_coin_token, ctx);
+
+        // Verify that the spending of token can only be done by the merchant.
         allow_list::verify_merchant_spending(policy, &mut req, ctx);
         token::confirm_request_mut(policy, req, ctx);
     }
 
-    /// This function will be used to mint the LocalCoin token .
+    /// This function will be used to mint the LocalCoin tokens with treasury cap.
+    /// It will also add sender in the campaign creator list in the bag.
+    /// Campaign Creator will only be able to hold the tokens or send the tokens to recipients.
     public(package) fun mint_tokens<T>(
         app: &mut LocalCoinApp,
         usdc_treasury: &mut UsdcTreasury<T>,
@@ -157,12 +166,15 @@ module localcoin::local_coin {
 
         token::confirm_with_treasury_cap(&mut app.local_coin_treasury, request, ctx);
         coin::put<T>(&mut usdc_treasury.balance, payment);
+
         let mut campaign_creator = vector::empty();
         vector::push_back(&mut campaign_creator, ctx.sender());
+
+        // Add sender in the list of campaign creator in the bag.
         allow_list::add_campaign_creator(policy, &app.token_policy_cap, campaign_creator, ctx);
     }
 
-    /// Once the localCoin token is spend , this function will be used to transfer usdc to super admin.
+    /// Once the localCoin token is spend , this function will be used to transfer usdc to the merchant.
     public(package) fun transfer_usdc_to_merchant<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
         amount: u64,
@@ -172,37 +184,41 @@ module localcoin::local_coin {
         transfer::public_transfer(coin::take(&mut usdc_treasury.balance, amount, ctx), recipient);
     }
 
-    /// transfer and spend roles is given to the merchant.
-    public(package) fun add_merchant_to_allow_and_spend_list(
+    /// The merchant is added to the allow list rule.
+    /// Merchant is added in the rule so that we can verify the spending of the token can only be done by merchant.
+    public(package) fun add_merchant_to_allow_list(
         policy: &mut TokenPolicy<LOCAL_COIN>,
         addresses: vector<address>,
         app: &LocalCoinApp,
         ctx: &mut TxContext
     ) {
-        // let token_policy_cap = app.token_policy_cap;
         let LocalCoinApp{
             id: _,
             local_coin_treasury: _,
             token_policy_cap: _,
             admin: _
         } = app;
+
+        // Adding merchant in the allowlist.
         allow_list::add_merchants(policy, &app.token_policy_cap, addresses, ctx);
     }
 
-    /// transfer roles is given to the recipient.
+    /// Adding recipient to the allow list rule.
+    /// Recipients can only hold the token or transfer the token to the merchants.
     public(package) fun add_recipient_to_allow_list(
         policy: &mut TokenPolicy<LOCAL_COIN>,
         addresses: vector<address>,
         app: &LocalCoinApp,
         ctx: &mut TxContext
     ) {
-        // let token_policy_cap = app.token_policy_cap;
         let LocalCoinApp{
             id: _,
             local_coin_treasury: _,
             token_policy_cap: _,
             admin: _
         } = app;
+
+        // Adding recipient in the allow list.
         allow_list::add_recipients(policy, &app.token_policy_cap, addresses, ctx);
     }
 

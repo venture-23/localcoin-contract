@@ -13,7 +13,7 @@ module localcoin::campaign_management {
 
     // === Constants ===
 
-    const MIN_CAMPAIGN_CREATOR_FEE:u64 = 1_000_000;
+    const MIN_TOKEN_TO_CREATE_CAMPAIGN:u64 = 10_000_000;
 
     // === Errors ===
 
@@ -55,7 +55,7 @@ module localcoin::campaign_management {
 
     // === Public-Mutative Functions ===
 
-    /// Campaign Creator will create campaign by sending USDC tokens.
+    /// Campaign Creator will create campaign by sending stable coin.
     /// After the tokens are deposited, localCoin will be minted to the campaign creator.
     public fun create_campaign<T> (
         name: String,
@@ -70,7 +70,7 @@ module localcoin::campaign_management {
         ctx: &mut TxContext
     ) {
         let amount = coin::value(&payment);
-        assert!(amount >= MIN_CAMPAIGN_CREATOR_FEE, EInsufficientCreatorFee);
+        assert!(amount >= MIN_TOKEN_TO_CREATE_CAMPAIGN, EInsufficientCreatorFee);
 
         let campaign = CampaignDetails {
             id: object::new(ctx),
@@ -86,11 +86,13 @@ module localcoin::campaign_management {
         };
 
         localcoin::mint_tokens(app, usdc_treasury, payment, amount, policy, ctx);
+
         // add campaigns details to dof
         ofield::add(&mut campaigns.id, name, campaign);
     }
 
-    /// Recipients can join the campaign by providing the campaign object that they wanted to join.
+    /// Recipients can join the campaign by providing the campaign object and the campaign name that they wanted to join.
+    /// Campaign Creator needs to approve the request later.
     public fun join_campaign (
         campaigns: &mut Campaigns,
         campaign_name: String,
@@ -105,7 +107,7 @@ module localcoin::campaign_management {
         vec_map::insert(&mut campaign.unverified_recipients, sender, username);
     }
 
-    // === Protected Functions ===
+    // === Public-Mutative Functions ===
 
     /// Campaign Creator can verify the recipients list and let them enter in their campaign.
     public fun verify_recipients (
@@ -130,7 +132,6 @@ module localcoin::campaign_management {
             let (key, value) = vec_map::remove(&mut campaign.unverified_recipients, &recipient);
             vec_map::insert(&mut campaign.verified_recipients, key, value);
         };
-
     }
 
     // Campaign creator transfers tokens to recipients. The recepient balance field gets updated
@@ -140,14 +141,13 @@ module localcoin::campaign_management {
         campaign_name: String,
         amount: u64,
         recipient: address,
-        reg: &mut Token<LOCAL_COIN>,
+        local_coin_token: &mut Token<LOCAL_COIN>,
         policy : &TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
     ) {
         assert!(amount > 0, EInvalidAmount);
 
         let campaign = ofield::borrow_mut<String, CampaignDetails>(&mut campaigns.id, campaign_name);
-        // let mut recipient_balance_map = campaign.recipient_balance;
 
         if (vec_map::contains(&campaign.recipient_balance, &recipient)) {
             let (key, val) = vec_map::remove(&mut campaign.recipient_balance, &recipient);
@@ -156,13 +156,13 @@ module localcoin::campaign_management {
             vec_map::insert(&mut campaign.recipient_balance, recipient, amount);
         };
 
-        localcoin::transfer_to_recipients(amount, recipient, reg, policy, ctx);
+        localcoin::transfer_to_recipients(amount, recipient, local_coin_token, policy, ctx);
     }
 
-    /// Merchant will request for the settlement once he get LocalCoin tokens from recipients.
+    /// Merchant will request for the settlement once he/she gets LocalCoin tokens from recipients.
     /// The LocalCoin token will be spent and the respective USDC amount will be transferred to
-    /// SuperAdmin.
-    /// Once SuperAdmin gets the USDC , they will be settling up with the merchants in fiat currency.
+    /// the Merchant.
+    /// Merchants can exchange fiat with the superAdmin or can also hold USDC in their wallet for now.
     public fun request_settlement<T>(
         usdc_treasury: &mut UsdcTreasury<T>,
         token: Token<LOCAL_COIN>,

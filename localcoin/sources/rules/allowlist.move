@@ -34,22 +34,20 @@ module localcoin::allowlist {
         policy: &TokenPolicy<T>,
         request: &mut ActionRequest<T>,
         ctx: &mut TxContext
-    ) 
-    {
+    ) {
         assert!(has_config(policy), EUserNotAllowed);
 
         let config = config(policy);
         let recipient = token::sender(request);
         let merchant = token::recipient(request);
 
-        // check if the sender is in the list of recipients in the bag.
+        // Check if the sender is in the list of recipients in the bag.
         assert!(vector::contains(bag::borrow(config, b"recipient".to_string()), &recipient), ESenderNotRecipient);
 
-        if (option::is_some(&merchant)) 
-        {
+        if (option::is_some(&merchant)) {
             let merchant = *option::borrow(&merchant);
 
-            // check if the merchant is in the list of merchants in the bag.
+            // Check if the receiver is in the list of merchants in the bag.
             assert!(vector::contains(bag::borrow(config, b"merchant".to_string()), &merchant), EReceiverNotMerchant);
         };
 
@@ -62,14 +60,13 @@ module localcoin::allowlist {
         policy: &TokenPolicy<T>,
         request: &mut ActionRequest<T>,
         ctx: &mut TxContext
-    ) 
-    {
+    ) {
         assert!(has_config(policy), EUserNotAllowed);
 
         let config = config(policy);
         let recipient = token::sender(request);
 
-        // verify the token spender is merchant.
+        // Verify the token spender is merchant.
         assert!(vector::contains(bag::borrow(config, b"merchant".to_string()), &recipient), ESenderNotMerchant);
 
         // Adding approval.
@@ -82,22 +79,20 @@ module localcoin::allowlist {
         policy: &TokenPolicy<T>,
         request: &mut ActionRequest<T>,
         ctx: &mut TxContext
-    ) 
-    {
+    ) {
         assert!(has_config(policy), EUserNotAllowed);
 
         let config = config(policy);
         let campaign_creator = token::sender(request);
         let recipient = token::recipient(request);
 
-        // check if the sender is in the list of campaign creators in the bag.
+        // Check if the sender is in the list of campaign creators in the bag.
         assert!(vector::contains(bag::borrow(config, b"campaign_creator".to_string()), &campaign_creator), ESenderNotCampaignCreator);
 
-        if (option::is_some(&recipient)) 
-        {
+        if (option::is_some(&recipient)) {
             let recipient = *option::borrow(&recipient);
 
-            // check if the receiver is in the list of recipients in the bag.
+            // Check if the receiver is in the list of recipients in the bag.
             assert!(vector::contains(bag::borrow(config, b"recipient".to_string()), &recipient), EReceiverNotRecipient);
         };
 
@@ -121,18 +116,18 @@ module localcoin::allowlist {
         
         // If the merchant key already exists in the bag, remove the previous vector of addresses.
         // Then, create a new vector of addresses containing the previous list and add the parameter data.
+        // After that create a new bag with the key merchant.
         let exist_already = bag::contains(config_mut,  b"merchant".to_string());
-        if (exist_already)
-        {
+        if (exist_already) {
             _merchant_list = bag::remove(config_mut, b"merchant".to_string());
+
             let merchant = vector::pop_back(&mut merchants);
             vector::push_back(&mut _merchant_list, merchant);
             bag::add(config_mut, b"merchant".to_string(), _merchant_list);
         }
-        else 
-        {
+        else {
 
-            // If the key doesn't exist initialize a bag with vector of addresses from the parameter.
+            // If the key doesn't exist, initialize a bag with vector of addresses from the parameter.
             bag::add(config_mut, b"merchant".to_string(), merchants);
         };
     }
@@ -143,10 +138,8 @@ module localcoin::allowlist {
         cap: &TokenPolicyCap<T>,
         mut addresses: vector<address>,
         ctx: &mut TxContext,
-    ) 
-    {
-        if (!has_config(policy)) 
-        {
+    ) {
+        if (!has_config(policy)) {
             token::add_rule_config(AllowList {}, policy, cap, bag::new(ctx), ctx);
         };
 
@@ -155,9 +148,9 @@ module localcoin::allowlist {
         
         // If the campaign_creator key already exists in the bag, remove the previous vector of addresses.
         // Then, create a new vector of addresses containing the previous list and add the parameter data.
+        // After that create a new bag with the key campaign_creator.
         let exist_already = bag::contains(config_mut,  b"campaign_creator".to_string());
-        if (exist_already)
-        {
+        if (exist_already) {
             _campaign_creators = bag::remove(config_mut, b"campaign_creator".to_string());
                 
             let creator_address = vector::pop_back(&mut addresses);
@@ -182,10 +175,8 @@ module localcoin::allowlist {
         cap: &TokenPolicyCap<T>,
         mut addresses: vector<address>,
         ctx: &mut TxContext,
-    ) 
-    {
-        if (!has_config(policy)) 
-        {
+    ) {
+        if (!has_config(policy)) {
             token::add_rule_config(AllowList {}, policy, cap, bag::new(ctx), ctx);
         };
 
@@ -195,17 +186,15 @@ module localcoin::allowlist {
         let exist_already = bag::contains(config_mut,  b"recipient".to_string());
         // If the recipient key already exists in the bag, remove the previous vector of addresses.
         // Then, create a new vector of addresses containing the previous list and add the parameter data.
-        if (exist_already)
-        {
+        // After that create a new bag with the key recipient.
+        if (exist_already) {
             _recipient_list = bag::remove(config_mut, b"recipient".to_string());
-            while (vector::length(&addresses) > 0) 
-            {
-                
+            while (vector::length(&addresses) > 0) {
                 let recipient_address = vector::pop_back(&mut addresses);
                 let already_in_list = vector::contains(&_recipient_list, &recipient_address);
+                
                 // If the address is already in the list of recipient then skip
-                if (!already_in_list)
-                    {
+                if (!already_in_list) {
                         vector::push_back(&mut _recipient_list, recipient_address);
                     };
                 bag::add(config_mut, b"recipient".to_string(), _recipient_list);

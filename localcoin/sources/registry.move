@@ -23,6 +23,9 @@ module localcoin::registry {
     }
 
     /// MerchantRegistry stores all the merchant details associated with LocalCoin.
+    /// It stores the information like count of unverified and verified merchant counts.
+    /// Unverified merchant are the merchants that have requested for registration and is not verified yet.
+    /// SuperAdmin verifies the merchants and makes it verified merchant from unverified merchant.
     public struct MerchantRegistry has key {
         id: UID,
         unverified_merchants_count: u64,
@@ -32,6 +35,8 @@ module localcoin::registry {
     }
 
     /// MerchantDetails stores the details of an individual merchant.
+    /// This stores the details like location , name , phone numnber of the store. 
+    /// If the verified status is true, then this is a verified merchants.
     public struct MerchantDetails has key, store {
         id: UID,
         verified_status: bool,
@@ -63,6 +68,7 @@ module localcoin::registry {
     // === Public-Mutative Functions ===
 
     /// Any of the merchant can come and register to be associated with our product using this function.
+    /// The user can provide their details and superAdmin will verify it later.
     public fun merchant_registration (
         proprietor: String, 
         phone_no: String, 
@@ -76,6 +82,7 @@ module localcoin::registry {
         assert!(vector::contains(& reg.unverified_merchants, &sender) == false &&
          vector::contains(& reg.verified_merchants, &sender) == false, ERegistrationRequested);
 
+        // create a merchant details with the verification status as false at first.
         let merchant_details = MerchantDetails {
             id: object::new(ctx),
             verified_status: false,
@@ -110,6 +117,7 @@ module localcoin::registry {
         assert!(vector::contains(& reg.unverified_merchants, &merchant_address) == true, ENoRegistrationRequest);
 
         let merchant_details = ofield::borrow_mut<address, MerchantDetails>(&mut reg.id, merchant_address);
+        
         // update verified status to true
         merchant_details.verified_status = true;
 
@@ -121,7 +129,7 @@ module localcoin::registry {
         vector::push_back(&mut merchant_list, merchant_address);
 
         // add merchant address in both allowlist as well as spendlist
-        localcoin::add_merchant_to_allow_and_spend_list(policy, merchant_list, app, ctx);
+        localcoin::add_merchant_to_allow_list(policy, merchant_list, app, ctx);
 
         // remove merchant address from unverified merchant list
         let (_ , index) = vector::index_of(& reg.unverified_merchants, &merchant_address);
@@ -129,8 +137,9 @@ module localcoin::registry {
         reg.unverified_merchants_count = reg.unverified_merchants_count - 1;
     }
 
-    /// SuperAdmin can use this function to update the merchant info
-    ///  if any merchant submits the false details while registering to be the merchant.
+    /// SuperAdmin can use this function to update the merchant information.
+    ///  If any merchant submits the false details while registering to be the merchant, they 
+    /// can use this function to correct it.
     public fun update_merchant_info (
         _: &SuperAdminCap, 
         reg: &mut MerchantRegistry,
