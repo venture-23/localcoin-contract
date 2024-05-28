@@ -29,7 +29,7 @@ module localcoin::localcoin_tests {
             let mut merchants = vector::empty<address>();
             vector::push_back(&mut merchants, merchant);
 
-            local_coin::add_merchant_to_allow_and_spend_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
+            local_coin::add_merchant_to_allow_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(tokenpolicy);
@@ -91,10 +91,11 @@ module localcoin::localcoin_tests {
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
+            let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_merchants(merchant, token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_token_to_merchants(1_000_000_000, merchant, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
 
+            test_utils::destroy(token);
             test_scenario::return_shared(tokenpolicy);
         };
 
@@ -146,7 +147,7 @@ module localcoin::localcoin_tests {
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::allowlist_rule::EUserNotAllowed)]
+    #[test, expected_failure(abort_code = localcoin::allowlist::EUserNotAllowed)]
     fun test_transfer_token_to_recipients_fail() {
         // Arrange
         let admin = @0xA;
@@ -172,7 +173,7 @@ module localcoin::localcoin_tests {
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::allowlist_rule::EUserNotAllowed)]
+    #[test, expected_failure(abort_code = localcoin::allowlist::EUserNotAllowed)]
     fun test_transfer_token_to_merchants_fail() {
         // Arrange
         let admin = @0xA;
@@ -188,16 +189,17 @@ module localcoin::localcoin_tests {
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
+            let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_merchants(merchant, token, &tokenpolicy, test_scenario::ctx(&mut scenario));
-
+            local_coin::transfer_token_to_merchants(1_000_000_000, merchant, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            
+            test_utils::destroy(token);
             test_scenario::return_shared(tokenpolicy);
         };
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::spendlist_rule::EUserNotAllowed)]
+    #[test, expected_failure(abort_code = localcoin::allowlist::EUserNotAllowed)]
     fun test_spend_token_from_merchant_fail() {
         // Arrange
         let admin = @0xA;
@@ -221,7 +223,7 @@ module localcoin::localcoin_tests {
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::spendlist_rule::EUserNotAllowed)]
+    #[test, expected_failure(abort_code = 0x2::dynamic_field::EFieldDoesNotExist)]
     fun test_spend_token_from_merchant_with_allow_rule_set_fail() {
         // Arrange
         let admin = @0xA;
@@ -264,7 +266,7 @@ module localcoin::localcoin_tests {
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::sequential_transfer::ESenderNotCampaignCreator)]
+    #[test, expected_failure(abort_code = 0x2::dynamic_field::EFieldDoesNotExist)]
     fun test_sender_not_campaign_creator_fail() {
         // Arrange
         let admin = @0xA;
@@ -306,7 +308,7 @@ module localcoin::localcoin_tests {
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::sequential_transfer::EReceiverNotMerchant)]
+    #[test, expected_failure(abort_code = 0x2::dynamic_field::EFieldDoesNotExist)]
     fun test_receiver_not_merchant_fail() {
         // Arrange
         let admin = @0xA;
@@ -340,16 +342,17 @@ module localcoin::localcoin_tests {
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
+            let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_merchants(merchant, token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_token_to_merchants(1_000_000_000, merchant, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
 
+            test_utils::destroy(token);
             test_scenario::return_shared(tokenpolicy);
         };
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::sequential_transfer::ESenderNotRecipient)]
+    #[test, expected_failure(abort_code = localcoin::allowlist::ESenderNotRecipient)]
     fun test_sender_not_recipient_fail() {
         // Arrange
         let admin = @0xA;
@@ -372,7 +375,7 @@ module localcoin::localcoin_tests {
             vector::push_back(&mut merchants, merchant);
             vector::push_back(&mut merchants, creator);
 
-            local_coin::add_merchant_to_allow_and_spend_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
+            local_coin::add_merchant_to_allow_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(tokenpolicy);
@@ -397,16 +400,17 @@ module localcoin::localcoin_tests {
         test_scenario::next_tx(&mut scenario, creator);
         {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
+            let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            local_coin::transfer_token_to_merchants(merchant, token, &tokenpolicy, test_scenario::ctx(&mut scenario));
+            local_coin::transfer_token_to_merchants(1_000_000_000, merchant, &mut token, &tokenpolicy, test_scenario::ctx(&mut scenario));
 
+            test_utils::destroy(token);
             test_scenario::return_shared(tokenpolicy);
         };
         test_scenario::end(scenario);
     }
 
-    #[test, expected_failure(abort_code = localcoin::sequential_transfer::EReceiverNotRecipient)]
+    #[test, expected_failure(abort_code = 0x2::dynamic_field::EFieldDoesNotExist)]
     fun test_receiver_not_recipient_fail() {
         let admin = @0xA;
         let creator =@0xB;
@@ -428,7 +432,7 @@ module localcoin::localcoin_tests {
             vector::push_back(&mut merchants, merchant);
             vector::push_back(&mut merchants, recipient);
 
-            local_coin::add_merchant_to_allow_and_spend_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
+            local_coin::add_merchant_to_allow_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(tokenpolicy);

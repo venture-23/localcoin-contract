@@ -127,7 +127,7 @@ module localcoin::campaign_management_tests {
             let mut merchants = vector::empty<address>();
             vector::push_back(&mut merchants, merchant);
 
-            local_coin::add_merchant_to_allow_and_spend_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
+            local_coin::add_merchant_to_allow_list(&mut tokenpolicy, merchants, &localCoinApp, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(tokenpolicy);
