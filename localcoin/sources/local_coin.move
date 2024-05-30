@@ -119,6 +119,42 @@ module localcoin::local_coin {
         token::confirm_request(policy, req, ctx);
     }
 
+    /// Function to remove merchants from the bag.
+    public fun remove_merchant(
+        policy: &mut TokenPolicy<LOCAL_COIN>,
+        merchant: address,
+        app: &LocalCoinApp,
+        ctx: &mut TxContext
+    ) {
+        // only admin of the token can call this function
+        assert!(ctx.sender() == app.admin, ESenderNotAdmin);
+        allow_list::remove_merchant(policy, &app.token_policy_cap, merchant);
+    }
+
+    // /// Function to remove merchants from the bag.
+    public fun remove_recipient(
+        policy: &mut TokenPolicy<LOCAL_COIN>,
+        recipient: address,
+        app: &LocalCoinApp,
+        ctx: &mut TxContext
+    ) {
+        // only admin of the token can call this function
+        assert!(ctx.sender() == app.admin, ESenderNotAdmin);
+        allow_list::remove_recipient(policy, &app.token_policy_cap, recipient);
+    }
+
+    // /// Function to remove merchants from the bag.
+    public fun remove_campaign_creator(
+        policy: &mut TokenPolicy<LOCAL_COIN>,
+        campaign_creator: address,
+        app: &LocalCoinApp,
+        ctx: &mut TxContext
+    ) {
+        // only admin of the token can call this function
+        assert!(ctx.sender() == app.admin, ESenderNotAdmin);
+        allow_list::remove_campaign_creator(policy, &app.token_policy_cap, campaign_creator);
+    }
+
     // === Public-Package Functions ===
 
     /// Campaign Creator uses this function to transfer the tokens to recipients.

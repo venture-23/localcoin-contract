@@ -3,7 +3,6 @@
 module localcoin::allowlist {
 
     // === Imports ===
-
     use sui::bag::{Self, Bag};
     use sui::token::{
         Self,
@@ -208,19 +207,75 @@ module localcoin::allowlist {
 
     }
 
-    /// Removes records from the `AllowList rule` for a given action. The Policy
-    /// owner can batch-remove records.
-    public fun remove_records<T>(
+    // /// Function to remove recipients from the bag.
+    public fun remove_recipient<T>(
         policy: &mut TokenPolicy<T>,
         cap: &TokenPolicyCap<T>,
-        mut addresses: vector<address>,
+        recipient: address
     ) {
         let config_mut = config_mut(policy, cap);
+        let mut _recipient_list = vector::empty();
+        let mut updated_recipients = vector::empty();
+        _recipient_list = bag::remove(config_mut, b"recipient".to_string());
 
-        while (vector::length(&addresses) > 0) {
-            let record = vector::pop_back(&mut addresses);
-            let _: bool = bag::remove(config_mut, record);
+        let mut i = 0;
+        while (i < vector::length(&_recipient_list)) { 
+            let item = _recipient_list[i]; 
+            if (!(item == recipient)){
+                vector::push_back(&mut updated_recipients, item);
+            };
+            i = i + 1 
         };
+        
+        bag::add(config_mut, b"recipient".to_string(), updated_recipients);
+
+    }
+
+    // /// Function to remove merchants from the bag.
+    public fun remove_merchant<T>(
+        policy: &mut TokenPolicy<T>,
+        cap: &TokenPolicyCap<T>,
+        merchant: address
+    ) {
+        let config_mut = config_mut(policy, cap);
+        let mut _recipient_list = vector::empty();
+        let mut updated_recipients = vector::empty();
+        _recipient_list = bag::remove(config_mut, b"merchant".to_string());
+
+        let mut i = 0;
+        while (i < vector::length(&_recipient_list)) { 
+            let item = _recipient_list[i]; 
+            if (!(item == merchant)){
+                vector::push_back(&mut updated_recipients, item);
+            };
+            i = i + 1 
+        };
+        
+        bag::add(config_mut, b"merchant".to_string(), updated_recipients);
+
+    }
+
+    /// Function to remove campaign creator from the bag.
+    public fun remove_campaign_creator<T>(
+        policy: &mut TokenPolicy<T>,
+        cap: &TokenPolicyCap<T>,
+        campaign_creator: address
+    ) {
+        let config_mut = config_mut(policy, cap);
+        let mut _recipient_list = vector::empty();
+        let mut updated_recipients = vector::empty();
+        _recipient_list = bag::remove(config_mut, b"campaign_creator".to_string());
+
+        let mut i = 0;
+        while (i < vector::length(&_recipient_list)) { 
+            let item = _recipient_list[i]; 
+            if (!(item == campaign_creator)){
+                vector::push_back(&mut updated_recipients, item);
+            };
+            i = i + 1 
+        };
+        
+        bag::add(config_mut, b"campaign_creator".to_string(), updated_recipients);
     }
 
     // === Internal ===
