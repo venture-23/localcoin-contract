@@ -68,3 +68,6 @@ script executes the following scripts in sequence:
 * verify_merchant.ts - SuperAdmin verifies a registered merchant.
 * transfer_to_merchants.ts - Transfers funds to merchants from the recipients.
 * request_settlement.ts - Requests settlement of funds by merchant. Merchant will burn the localCoin and get the equivalent amount of USDC tokens in this transaction.
+* remove_merchant.ts - Removes merchant from the bag of LocalCoin.
+* remove_merchant.ts - Removes recipient from the bag of LocalCoin.
+* remove_merchant.ts - Removes campaign_creator from the bag of LocalCoin.
