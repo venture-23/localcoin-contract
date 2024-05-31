@@ -36,9 +36,17 @@ A closed loop token is standard in SUI where creators limit where the token is u
 * Merchants receive tokens only from recipients. 
 * Only merchants can spend the tokens.
 
-Website: https://localcoin.us/
+# Resources
 
-App: https://app.localcoin.us/
+The application is currently deployed on the testnet. The package identifier is 0xa82ce1c2d6b089981277db26ec87ffd2902ec929d85029d191943967e7f0d04d.
+
+You can explore it using the following link: [Suivision Testnet Explorer](https://testnet.suivision.xyz/package/0xa82ce1c2d6b089981277db26ec87ffd2902ec929d85029d191943967e7f0d04d).
+
+Website: [LocalCoin](https://localcoin.us/)
+
+App: [Application](https://app.localcoin.us/)
+
+Github FrontEnd Repo: [LocalCoin-FE](https://github.com/venture-23/localcoin-sui-fe)
 
 # Script Execution Guide
 This repository contains a set of scripts to manage various tasks related to campaigns, tokens, and merchants. The main script executes several TypeScript scripts in sequence to perform these tasks.
