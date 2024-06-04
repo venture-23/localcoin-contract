@@ -7,6 +7,7 @@ module localcoin::campaign_management {
     use sui::coin::{Self, Coin};
     use sui::token::{Self, TokenPolicy, Token};
     use sui::vec_map::{Self, VecMap};
+    use sui::clock::{Self, Clock};
     use sui::dynamic_object_field as ofield;
 
     use localcoin::local_coin::{Self as localcoin, LocalCoinApp, UsdcTreasury, LOCAL_COIN};
@@ -14,6 +15,7 @@ module localcoin::campaign_management {
     // === Constants ===
 
     const MIN_TOKEN_TO_CREATE_CAMPAIGN:u64 = 10_000_000;
+    const DAY_IN_MILISECONDS: u64 = 86400000;
 
     // === Errors ===
 
@@ -22,6 +24,7 @@ module localcoin::campaign_management {
     const EJoinRequested: u64 = 33;
     const ESenderNotCampaignOwner: u64 = 44;
     const ERecipientLimitReached: u64 = 55;
+    const ECampaignEnded: u64 = 66;
 
     // === Structs ===
 
@@ -35,6 +38,9 @@ module localcoin::campaign_management {
         name: String,
         description: String,
         no_of_recipients: u64,
+        category: String,
+        start_date: u64,
+        end_date: u64,
         unverified_recipients: VecMap<address, String>,
         verified_recipients: VecMap<address, String>,
         recipient_balance: VecMap<address, u64>,
@@ -62,6 +68,9 @@ module localcoin::campaign_management {
         description: String,
         no_of_recipients: u64,
         location: String,
+        category: String,
+        clock: &Clock,
+        campaign_duration_days: u64,
         payment: Coin<T>,
         app: &mut LocalCoinApp,
         usdc_treasury: &mut UsdcTreasury<T>,
@@ -77,6 +86,9 @@ module localcoin::campaign_management {
             name: name,
             description: description,
             no_of_recipients: no_of_recipients,
+            category: category,
+            start_date: clock::timestamp_ms(clock),
+            end_date: clock::timestamp_ms(clock) + (campaign_duration_days * DAY_IN_MILISECONDS),
             unverified_recipients: vec_map::empty<address, String>(),
             verified_recipients: vec_map::empty<address, String>(),
             recipient_balance: vec_map::empty<address, u64>(),
@@ -97,10 +109,13 @@ module localcoin::campaign_management {
         campaigns: &mut Campaigns,
         campaign_name: String,
         username: String,
+        clock: &Clock,
         ctx: &mut TxContext
     ) {
+        let current_time = clock::timestamp_ms(clock);
         let sender = ctx.sender();
         let campaign = ofield::borrow_mut<String, CampaignDetails>(&mut campaigns.id, campaign_name);
+        assert!(current_time <= (campaign.end_date), ECampaignEnded);
         assert!(vec_map::contains(& campaign.unverified_recipients, &sender) == false &&
          vec_map::contains(& campaign.verified_recipients, &sender) == false, EJoinRequested);
 
@@ -164,15 +179,18 @@ module localcoin::campaign_management {
     /// the Merchant.
     /// Merchants can exchange fiat with the superAdmin or can also hold USDC in their wallet for now.
     public fun request_settlement<T>(
+        amount: u64,
         usdc_treasury: &mut UsdcTreasury<T>,
-        token: Token<LOCAL_COIN>,
+        token: &mut Token<LOCAL_COIN>,
         policy : &mut TokenPolicy<LOCAL_COIN>,
         ctx: &mut TxContext
     ) {
-        let amount = token::value(&token);
-        assert!(amount > 0, EInvalidAmount);
+        let token_value = token::value(token); 
+        assert!(token_value > 0, EInvalidAmount);
+        assert!(amount <= token_value, EInvalidAmount);
 
-        localcoin::spend_token_from_merchant(token, policy, ctx);
+        let splitted_token = token::split(token, amount, ctx);
+        localcoin::spend_token_from_merchant(splitted_token, policy, ctx);
 
         // transfer equivalent amount to super admin
         localcoin::transfer_usdc_to_merchant(usdc_treasury, amount, ctx.sender(), ctx);
@@ -197,6 +215,11 @@ module localcoin::campaign_management {
     public fun get_recipients_balance(campaigns: &Campaigns, campaign_name: String): VecMap<address, u64> {
         let campaign = ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name);
         campaign.recipient_balance
+    }
+
+    public fun get_campaign_end_date(campaigns: &Campaigns, campaign_name: String): u64 {
+        let campaign = ofield::borrow<String, CampaignDetails>(&campaigns.id, campaign_name);
+        campaign.end_date
     }
 
     #[test_only]
