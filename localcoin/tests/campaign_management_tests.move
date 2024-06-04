@@ -4,6 +4,7 @@ module localcoin::campaign_management_tests {
     use localcoin::local_coin::{Self, LOCAL_COIN, LocalCoinApp, UsdcTreasury};
     use sui::token::{Self, TokenPolicy};
     use sui::coin;
+    use sui::clock;
     use std::string::{Self};
     use sui::sui::SUI;
     use sui::test_scenario;
@@ -46,25 +47,29 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 2,
-             string::utf8(b"Kathmandu"), coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
 
         // recipient joins first campaign
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         // Assert the storage updates
@@ -199,19 +204,20 @@ module localcoin::campaign_management_tests {
         {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
+            let mut token = token::mint_for_testing<LOCAL_COIN>(1_000_000_000, test_scenario::ctx(&mut scenario));
 
-            campaign_management::request_settlement(&mut usdcTreasury, token, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+            campaign_management::request_settlement(1000000, &mut usdcTreasury, &mut token, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(tokenpolicy);
+            test_utils::destroy(token);
         };
 
         // Assert spent balance after settlement
         test_scenario::next_tx(&mut scenario, admin);
         {
             let tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            assert!(token::spent_balance<LOCAL_COIN>(&tokenpolicy) == 1_000_000_000, 0);
+            assert!(token::spent_balance<LOCAL_COIN>(&tokenpolicy) == 1000000, 0);
             test_scenario::return_shared(tokenpolicy);
         };
         test_scenario::end(scenario);
@@ -254,15 +260,17 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 2,
-             string::utf8(b"Kathmandu"), coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
 
         // create second campaign
@@ -272,34 +280,40 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign 2"), string::utf8(b"Descripton 2"), 2,
-             string::utf8(b"US"), coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"US"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
 
         // two recipients join first campaign
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         test_scenario::next_tx(&mut scenario, recipient2);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Jack"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Jack"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         // Assert the storege 
@@ -323,19 +337,23 @@ module localcoin::campaign_management_tests {
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign 2"), string::utf8(b"Bob"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign 2"), string::utf8(b"Bob"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         test_scenario::next_tx(&mut scenario, recipient2);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign 2"), string::utf8(b"Jack"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign 2"), string::utf8(b"Jack"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         // Assert the storege 
@@ -390,15 +408,17 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::zero(test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 2,
-             string::utf8(b"Kathmandu"), coin,  &mut localCoinApp, &mut usdcTreasury, &mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, &mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
         test_scenario::end(scenario);
     }
@@ -438,35 +458,105 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 2,
-             string::utf8(b"Kathmandu"), coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
 
         // recipient join campaign
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         // try to join campaign from same address with different name, it fails
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Jack"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Jack"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
+        };
+        test_scenario::end(scenario);
+    }
+
+    #[test, expected_failure(abort_code = localcoin::campaign_management::ECampaignEnded)]
+    fun test_join__ended_campaign_fail() {
+        // Arrange
+        let admin = @0xA;
+        let creator = @0xB;
+        let recipient = @0xC;
+
+        let mut scenario = test_scenario::begin(admin);
+        {
+            local_coin::test_init(test_scenario::ctx(&mut scenario))
+
+        };
+
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            campaign_management::test_init(test_scenario::ctx(&mut scenario))
+
+        };
+
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            let localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
+
+            local_coin::register_token<SUI>(&localCoinApp, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_shared(localCoinApp);
+        };
+
+        // create campaign
+        test_scenario::next_tx(&mut scenario, creator);
+        {
+            let mut localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
+            let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
+            let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
+
+            let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
+            campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 2,
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_shared(localCoinApp);
+            test_scenario::return_shared(usdcTreasury);
+            test_scenario::return_shared(campaigns);
+            test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
+        };
+
+        // recipient join campaign
+        test_scenario::next_tx(&mut scenario, recipient);
+        {
+            let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let mut clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
+            // Campaign is for a day, now increase clock by more tha a day and try to join campaign, it fails
+            clock.set_for_testing(86400001);
+
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), &clock, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
         test_scenario::end(scenario);
     }
@@ -506,25 +596,29 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 2,
-             string::utf8(b"Kathmandu"), coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
 
         // recipient join campaign
         test_scenario::next_tx(&mut scenario, recipient);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         // non campaign owner tries to verify recipients, it fails
@@ -583,35 +677,41 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 1,
-             string::utf8(b"Kathmandu"), coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
 
         // recipient join campaign
         test_scenario::next_tx(&mut scenario, recipient1);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Bob"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
          // another recipient joins campaign
         test_scenario::next_tx(&mut scenario, recipient2);
         {
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
-            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Jack"), test_scenario::ctx(&mut scenario));
+            campaign_management::join_campaign(&mut campaigns, string::utf8(b"Test Campaign"), string::utf8(b"Jack"), &clock, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(campaigns);
+            clock.destroy_for_testing();
         };
 
         // verify one recipient
@@ -687,15 +787,17 @@ module localcoin::campaign_management_tests {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut campaigns = test_scenario::take_shared<Campaigns>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let clock = clock::create_for_testing(test_scenario::ctx(&mut scenario));
 
             let coin = coin::mint_for_testing<SUI>(1_000_000_000, test_scenario::ctx(&mut scenario));
             campaign_management::create_campaign(string::utf8(b"Test Campaign"), string::utf8(b"Descripton"), 2,
-             string::utf8(b"Kathmandu"), coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+             string::utf8(b"Kathmandu"), string::utf8(b"Food Category"), &clock, 1, coin,  &mut localCoinApp, &mut usdcTreasury, & mut campaigns, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(localCoinApp);
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(campaigns);
             test_scenario::return_shared(tokenpolicy);
+            clock.destroy_for_testing();
         };
 
         // again creator transfers tokens to recipient
@@ -746,12 +848,57 @@ module localcoin::campaign_management_tests {
         {
             let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
             let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
-            let token = token::mint_for_testing<LOCAL_COIN>(0, test_scenario::ctx(&mut scenario));
+            let mut token = token::mint_for_testing<LOCAL_COIN>(0, test_scenario::ctx(&mut scenario));
 
-            campaign_management::request_settlement(&mut usdcTreasury, token, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+            campaign_management::request_settlement(1, &mut usdcTreasury, &mut token, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(usdcTreasury);
             test_scenario::return_shared(tokenpolicy);
+            test_utils::destroy(token);
+        };
+
+        test_scenario::end(scenario);
+    }
+
+    #[test, expected_failure(abort_code = localcoin::campaign_management::EInvalidAmount)]
+    fun test_request_settlement_amount_more_than_token_obj_fail() {
+        // Arrange
+        let admin = @0xA;
+        let merchant = @0xD;
+
+        let mut scenario = test_scenario::begin(admin);
+        {
+            local_coin::test_init(test_scenario::ctx(&mut scenario))
+
+        };
+
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            campaign_management::test_init(test_scenario::ctx(&mut scenario))
+
+        };
+
+        test_scenario::next_tx(&mut scenario, admin);
+        {
+            let localCoinApp = test_scenario::take_shared<LocalCoinApp>(&scenario);
+
+            local_coin::register_token<SUI>(&localCoinApp, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_shared(localCoinApp);
+        };
+
+        // merchant request for settlement
+        test_scenario::next_tx(&mut scenario, merchant);
+        {
+            let mut usdcTreasury = test_scenario::take_shared<UsdcTreasury<SUI>>(&scenario);
+            let mut tokenpolicy = test_scenario::take_shared<TokenPolicy<LOCAL_COIN>>(&scenario);
+            let mut token = token::mint_for_testing<LOCAL_COIN>(5_000_000_000, test_scenario::ctx(&mut scenario));
+
+            campaign_management::request_settlement(5_000_000_001, &mut usdcTreasury, &mut token, &mut tokenpolicy, test_scenario::ctx(&mut scenario));
+
+            test_scenario::return_shared(usdcTreasury);
+            test_scenario::return_shared(tokenpolicy);
+            test_utils::destroy(token);
         };
 
         test_scenario::end(scenario);
