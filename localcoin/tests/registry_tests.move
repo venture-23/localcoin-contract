@@ -30,7 +30,7 @@ module localcoin::registry_tests {
         {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
-            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
+            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Store Image Url"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(merchantRegistry);
         };
@@ -86,7 +86,7 @@ module localcoin::registry_tests {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
-            registry::update_merchant_info(&superAdmin, &mut merchantRegistry, true, merchant, string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob new Store"), string::utf8(b"Kathmandu"));
+            registry::update_merchant_info(&superAdmin, &mut merchantRegistry, true, merchant, string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob new Store"), string::utf8(b"Store image"), string::utf8(b"Kathmandu"));
 
             test_scenario::return_to_address(admin, superAdmin);
             test_scenario::return_shared(merchantRegistry);
@@ -109,7 +109,7 @@ module localcoin::registry_tests {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
-            registry::update_merchant_info(&superAdmin, &mut merchantRegistry, false, merchant, string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob new Store"), string::utf8(b"Kathmandu"));
+            registry::update_merchant_info(&superAdmin, &mut merchantRegistry, false, merchant, string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob new Store"), string::utf8(b"Store image"), string::utf8(b"Kathmandu"));
 
             test_scenario::return_to_address(admin, superAdmin);
             test_scenario::return_shared(merchantRegistry);
@@ -148,7 +148,7 @@ module localcoin::registry_tests {
         {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
-            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
+            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Store Image Url"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(merchantRegistry);
         };
@@ -158,7 +158,7 @@ module localcoin::registry_tests {
         {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
-            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
+            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Store Image Url"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(merchantRegistry);
         };
@@ -219,7 +219,7 @@ module localcoin::registry_tests {
             let superAdmin = test_scenario::take_from_sender<SuperAdminCap>(&scenario);
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
-            registry::update_merchant_info(&superAdmin, &mut merchantRegistry, false, merchant, string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob new Store"), string::utf8(b"Kathmandu"));
+            registry::update_merchant_info(&superAdmin, &mut merchantRegistry, false, merchant, string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob new Store"), string::utf8(b"Store image"), string::utf8(b"Kathmandu"));
 
             test_scenario::return_to_address(admin, superAdmin);
             test_scenario::return_shared(merchantRegistry);
@@ -249,7 +249,7 @@ module localcoin::registry_tests {
         {
             let mut merchantRegistry = test_scenario::take_shared<MerchantRegistry>(&scenario);
 
-            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
+            registry::merchant_registration(string::utf8(b"Bob"), string::utf8(b"9813214354"), string::utf8(b"Bob Store"), string::utf8(b"Store Image Url"), string::utf8(b"Kathmandu"), &mut merchantRegistry, test_scenario::ctx(&mut scenario));
 
             test_scenario::return_shared(merchantRegistry);
         };
