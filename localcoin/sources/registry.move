@@ -44,7 +44,8 @@ module localcoin::registry {
         proprietor: String,
         phone_no: String,
         store_name: String,
-        location: String
+        store_image: String,
+        location: String,
     }
 
     // === Init Function ===
@@ -72,7 +73,8 @@ module localcoin::registry {
     public fun merchant_registration (
         proprietor: String, 
         phone_no: String, 
-        store_name: String, 
+        store_name: String,
+        store_image: String, 
         location: String,
         reg: &mut MerchantRegistry,
         ctx: &mut TxContext
@@ -90,6 +92,7 @@ module localcoin::registry {
             proprietor: proprietor,
             phone_no: phone_no,
             store_name: store_name,
+            store_image: store_image,
             location: location
         };
 
@@ -147,7 +150,8 @@ module localcoin::registry {
         merchant_addr: address,
         proprietor: String, 
         phone_no: String, 
-        store_name: String, 
+        store_name: String,
+        store_image: String, 
         location: String
     ) {
         assert!(vector::contains(& reg.unverified_merchants, &merchant_addr) == true ||
@@ -160,6 +164,7 @@ module localcoin::registry {
         merchant_details.proprietor = proprietor;
         merchant_details.phone_no = phone_no;
         merchant_details.store_name = store_name;
+        merchant_details.store_image = store_image;
         merchant_details.location = location;
 
         if (verified_status == false) {
